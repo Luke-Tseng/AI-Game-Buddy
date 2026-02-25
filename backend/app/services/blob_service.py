@@ -21,7 +21,7 @@ class BlobService:
             )
         else:
             raise ValueError(
-                "Storage configuration missing. Set either BLOB_CONNECTION_STRING or BLOB_ENDPOINT"
+                "Storage configuration missing. Set BLOB_ENDPOINT"
             )
 
         if not self.client:

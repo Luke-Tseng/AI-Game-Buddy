@@ -24,7 +24,7 @@ class CosmosService:
             )
         else:
             raise ValueError(
-                "Database configuration missing. Set either COSMOS_CONNECTION_STRING or COSMOS_ENDPOINT"
+                "Database configuration missing. Set COSMOS_ENDPOINT"
             )
 
         if not self.client:
