@@ -16,7 +16,7 @@ class CosmosService:
         self.client: CosmosClient | None = None
 
         if settings.COSMOS_ENDPOINT:
-            # Use managed identity if no connection string
+            # Use managed identity
             logger.info("Initializing Cosmos Service Client with Azure Credentials")
             credential = DefaultAzureCredential()
             self.client = CosmosClient(
@@ -114,7 +114,7 @@ class CosmosService:
             items = [
                 item
                 async for item in container.query_items(
-                    query=query, parameters=parameters
+                    query=query, parameters=parameters, enable_scan_in_query=True
                 )
             ]
             logger.info(f"Query returned {len(items)} items")
