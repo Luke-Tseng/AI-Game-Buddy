@@ -1,12 +1,17 @@
+import logging
+
+from app.schemas import GameUpdate
+from app.services.game_service_factory import GameServiceFactory
 from app.services.room_service import RoomService
 
-from .chess_game import ChessSystem
 from .chess_interface import ChessAction, ChessMovePayload, ChessState
 
-chess_system = ChessSystem()
+logger = logging.getLogger(__name__)
 
 
-def chess_tools(mcp, room_service: RoomService):
+def chess_tools(
+    mcp, room_service: RoomService, game_service_factory: GameServiceFactory
+):
     """
     Registers Chess tools that gets and sets game states via RoomService.
     """
@@ -42,11 +47,15 @@ def chess_tools(mcp, room_service: RoomService):
 
         room = await room_service.get_room(room_id)
         if not room:
+            logger.error(f"Error in get_chess_board_representation: Room {room_id} not found")
             return {"error": f"Room {room_id} not found."}
 
         # Check if game_state exists
         if not room.game_state or room.game_state == {}:
+            logger.error("Error in get_chess_board_representation: Game has not been initialized yet")
             return {"error": "Game has not been initialized yet."}
+
+        chess_system = game_service_factory.get_service(game_type="chess")
 
         state = ChessState.model_validate(room.game_state)
         return chess_system.get_board_representation(state)
@@ -75,10 +84,14 @@ def chess_tools(mcp, room_service: RoomService):
 
         room = await room_service.get_room(room_id)
         if not room:
+            logger.error(f"Error in list_legal_chess_moves: Room {room_id} not found")
             return {"error": f"Room {room_id} not found."}
         # Check if game_state exists
         if not room.game_state or room.game_state == {}:
+            logger.error("Error in list_legal_chess_moves: Game has not been initialized yet")
             return {"error": "Game has not been initialized yet."}
+
+        chess_system = game_service_factory.get_service(game_type="chess")
 
         state = ChessState.model_validate(room.game_state)
         current_player_index = state.meta["current_player_index"]
@@ -122,10 +135,14 @@ def chess_tools(mcp, room_service: RoomService):
 
         room = await room_service.get_room(room_id)
         if not room:
+            logger.error(f"Error in play_chess_move: Room {room_id} not found")
             return {"error": f"Room {room_id} not found."}
 
         if not room.game_state or room.game_state == {}:
+            logger.error("Error in play_chess_move: Game has not been initialized yet")
             return {"error": "Game has not been initialized yet."}
+
+        chess_system = game_service_factory.get_service(game_type="chess")
 
         state = ChessState.model_validate(room.game_state)
         current_player_index = state.meta["current_player_index"]
@@ -134,18 +151,24 @@ def chess_tools(mcp, room_service: RoomService):
         action = ChessAction(type="MAKE_MOVE", payload=ChessMovePayload(move=move_uci))
 
         try:
+            # Create new state from action
             new_state = chess_system.make_action(state, current_player_id, action)
+            new_state_dict = new_state.model_dump(mode="json")
 
             # Update databases on move made
-            await room_service.set_game_state(
-                room_id, new_state.model_dump(mode="json")
+            await room_service.set_game_state(room_id, new_state_dict)
+
+            # Broadcast to WebSockets via ConnectionService
+            user_list = await room_service.get_user_list(room_id)
+            game_update = GameUpdate(room_id=room_id, game_state=new_state_dict)
+
+            await room_service._connection_service.publish_event(
+                channel="game_update",
+                user_list=user_list,
+                message_data=game_update.model_dump(),
             )
 
-            return {
-                "status": "success",
-                "new_fen": new_state.board_fen,
-                "game_over": new_state.finished,
-                "result": new_state.game_result,
-            }
+            return {"status": "success", "new_fen": new_state.board_fen}
         except Exception as e:
+            logger.error(f"Error in play_chess_move: {e}")
             return {"status": "error", "message": str(e)}
