@@ -36,7 +36,7 @@ class ChessState(GameState):
 
         # White's turn corresponds to current_player_index 0, Black's to 1
         is_white_turn = board.turn == chess.WHITE
-        current_player_index = self.meta.get("current_player_index")
+        current_player_index = self.current_player_index
 
         if is_white_turn and current_player_index != 0:
             raise ValueError(

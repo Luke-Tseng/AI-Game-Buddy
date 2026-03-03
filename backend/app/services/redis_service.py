@@ -57,7 +57,7 @@ class RedisService:
         """Close Redis connections and clean up resources."""
         if self.r:
             logger.info("Closing Redis Client session")
-            await self.r.close()
+            await self.r.aclose()
 
     async def publish_message(self, channel_name: str, message: dict):
         """Publish a message to a Redis channel.

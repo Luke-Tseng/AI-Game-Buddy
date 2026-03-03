@@ -152,6 +152,7 @@ def chess_tools(
 
         try:
             # Create new state from action
+            # TODO: Add a check if the ai is the current player
             new_state = chess_system.make_action(state, current_player_id, action)
             new_state_dict = new_state.model_dump(mode="json")
 
