@@ -13,7 +13,8 @@ def chess_tools(mcp, room_service: RoomService):
 
     @mcp.tool()
     async def get_chess_board_representation(room_id: str) -> dict:
-        """Returns a dictionary representation of the current chess game state
+        """
+        Returns a dictionary representation of the current chess game state
 
         Use this tool to synchronize your understanding of the board. It provides
         both machine-readable FEN and human-readable ASCII formats.
@@ -52,7 +53,8 @@ def chess_tools(mcp, room_service: RoomService):
 
     @mcp.tool()
     async def list_legal_chess_moves(room_id: str) -> dict:
-        """Retrieves all valid moves for the player whose turn it is in a specific room.
+        """
+        Retrieves all valid moves for the player whose turn it is in a specific room.
 
         This tool connects to the room service, fetches the current state, and
         calculates legal moves based on the FEN board position. It prevents
@@ -94,9 +96,30 @@ def chess_tools(mcp, room_service: RoomService):
     @mcp.tool()
     async def play_chess_move(room_id: str, move_uci: str) -> dict:
         """
-        Executes a move in the database. Automatically identifies
-        the current player and updates the room's game state.
+        Executes a legal chess move in the specified room and updates the persistent database.
+
+        This is a state-changing tool. It identifies the current player, validates
+        the move against chess rules, updates the board FEN, increments the turn
+        counter, and saves the result to the Room Service.
+
+        Args:
+            room_id (str): The unique identifier for the game room.
+            move_uci (str): The move to play in Universal Chess Interface format
+                           (e.g., 'e2e4', 'e7e5', 'e1g1' for castling).
+
+        Returns:
+            dict: A status report of the action:
+                - status (str): 'success' if the move was applied, 'error' otherwise.
+                - new_fen (str): The updated board state in FEN format after the move.
+                - game_over (bool): True if this move resulted in checkmate,
+                  stalemate, or a draw.
+                - result (str | None): If game_over is True, this contains the
+                  outcome (e.g., 'white_wins', 'black_wins', 'draw').
+                  Remains null during active play.
+                - message (str, optional): A descriptive error message if the
+                  move was illegal or the room was not found.
         """
+
         room = await room_service.get_room(room_id)
         if not room:
             return {"error": f"Room {room_id} not found."}
@@ -105,7 +128,8 @@ def chess_tools(mcp, room_service: RoomService):
             return {"error": "Game has not been initialized yet."}
 
         state = ChessState.model_validate(room.game_state)
-        current_player_id = state.player_ids[state.meta["current_player_index"]]
+        current_player_index = state.meta["current_player_index"]
+        current_player_id = state.player_ids[current_player_index]
 
         action = ChessAction(type="MAKE_MOVE", payload=ChessMovePayload(move=move_uci))
 
