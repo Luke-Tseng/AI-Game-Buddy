@@ -23,9 +23,7 @@ class CosmosService:
                 url=settings.COSMOS_ENDPOINT, credential=credential
             )
         else:
-            raise ValueError(
-                "Database configuration missing. Set COSMOS_ENDPOINT"
-            )
+            raise ValueError("Database configuration missing. Set COSMOS_ENDPOINT")
 
         if not self.client:
             raise ConnectionError("Failed to connect to CosmosClient")

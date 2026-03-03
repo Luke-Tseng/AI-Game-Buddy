@@ -20,9 +20,7 @@ class BlobService:
                 account_url=settings.BLOB_ENDPOINT, credential=credential
             )
         else:
-            raise ValueError(
-                "Storage configuration missing. Set BLOB_ENDPOINT"
-            )
+            raise ValueError("Storage configuration missing. Set BLOB_ENDPOINT")
 
         if not self.client:
             raise ConnectionError("Failed to connect to BlobServiceClient")
