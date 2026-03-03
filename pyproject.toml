@@ -115,7 +115,6 @@ dependencies = [
     "opentelemetry-semantic-conventions==0.52b1",
     "opentelemetry-util-http==0.52b1",
     "packaging==25.0",
-    "passlib==1.7.4",
     "pluggy==1.6.0",
     "propcache==0.3.2",
     "psutil==7.0.0",
@@ -159,4 +158,5 @@ dependencies = [
     "yarl==1.20.1",
     "zipp==3.23.0",
     "fastmcp>=2.12.5",
+    "argon2-cffi>=25.1.0",
 ]

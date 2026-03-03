@@ -85,8 +85,8 @@ logger = logging.getLogger(__name__)
 
 FastAPIInstrumentor.instrument_app(app)
 
-mcp_server = get_mcp_service()
-app.mount("/mcp", mcp_server.sse_app())
+mcp_service = get_mcp_service()
+app.mount("/mcp", mcp_service.get_app())
 
 app.include_router(accounts_router.router)
 app.include_router(chat_router.router)

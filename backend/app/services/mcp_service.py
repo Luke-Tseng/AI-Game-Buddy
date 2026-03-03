@@ -12,7 +12,7 @@ class MCPService:
     """
 
     def __init__(self, room_service: RoomService, game_service_factory: GameServiceFactory):
-        self.mcp = FastMCP("Game-Master")
+        self.mcp = FastMCP("AI-Game-Buddy-MCP-Server")
         self.room_service = room_service
         self.game_service_factory = game_service_factory
 
@@ -26,4 +26,4 @@ class MCPService:
 
     def get_app(self):
         """Returns the SSE-ready application for mounting in FastAPI."""
-        return self.mcp.sse_app()
+        return self.mcp.http_app()
