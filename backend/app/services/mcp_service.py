@@ -26,4 +26,4 @@ class MCPService:
 
     def get_app(self):
         """Returns the SSE-ready application for mounting in FastAPI."""
-        return self.mcp.http_app()
+        return self.mcp.http_app(path="/")
