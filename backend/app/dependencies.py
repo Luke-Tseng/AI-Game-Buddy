@@ -1,11 +1,11 @@
 from functools import lru_cache
 
-from app.mcp_server import create_mcp_server
 from app.services.blob_service import BlobService
 from app.services.chat_service import ChatService
 from app.services.connection_service import ConnectionService
 from app.services.cosmos_service import CosmosService
 from app.services.game_service_factory import GameServiceFactory
+from app.services.mcp_service import MCPService
 from app.services.redis_service import RedisService
 from app.services.room_service import RoomService
 from app.services.user_service import UserService
@@ -59,7 +59,7 @@ def get_chat_service() -> ChatService:
 
 
 @lru_cache
-def get_mcp_server():
-    return create_mcp_server(
-        room_service=get_room_service(), game_service_factory=get_game_service_factory
+def get_mcp_service() -> MCPService:
+    return MCPService(
+        room_service=get_room_service(), game_service_factory=get_game_service_factory()
     )

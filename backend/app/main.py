@@ -12,7 +12,7 @@ from app.config import settings
 from app.dependencies import (
     get_blob_service,
     get_cosmos_service,
-    get_mcp_server,
+    get_mcp_service,
     get_redis_service,
 )
 from app.redis_listener import RedisListener
@@ -85,7 +85,7 @@ logger = logging.getLogger(__name__)
 
 FastAPIInstrumentor.instrument_app(app)
 
-mcp_server = get_mcp_server()
+mcp_server = get_mcp_service()
 app.mount("/mcp", mcp_server.sse_app())
 
 app.include_router(accounts_router.router)
