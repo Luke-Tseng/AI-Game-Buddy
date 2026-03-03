@@ -90,7 +90,7 @@ def chess_tools(mcp, room_service: RoomService):
         return {
             "room_id": room_id,
             "current_turn": "white" if current_player_index == 0 else "black",
-            "legal_moves": moves
+            "legal_moves": moves,
         }
 
     @mcp.tool()
@@ -137,13 +137,15 @@ def chess_tools(mcp, room_service: RoomService):
             new_state = chess_system.make_action(state, current_player_id, action)
 
             # Update databases on move made
-            await room_service.set_game_state(room_id, new_state.model_dump(mode="json"))
+            await room_service.set_game_state(
+                room_id, new_state.model_dump(mode="json")
+            )
 
             return {
                 "status": "success",
                 "new_fen": new_state.board_fen,
                 "game_over": new_state.finished,
-                "result": new_state.game_result
+                "result": new_state.game_result,
             }
         except Exception as e:
             return {"status": "error", "message": str(e)}
