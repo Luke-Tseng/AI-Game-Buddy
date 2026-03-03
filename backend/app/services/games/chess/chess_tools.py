@@ -94,7 +94,7 @@ def chess_tools(
         chess_system = game_service_factory.get_service(game_type="chess")
 
         state = ChessState.model_validate(room.game_state)
-        current_player_index = state.meta["current_player_index"]
+        current_player_index = state.current_player_index
         current_player = state.player_ids[current_player_index]
         actions = chess_system.get_valid_actions(state, current_player)
 

@@ -65,7 +65,6 @@ class GameState(BaseModel):
     )  # Unique identifier for each game
     player_ids: list[str]  # Player identifications
     finished: bool = False  # Set True when game is finished
-    meta: dict[str, Any]  # Any Game Specific Data
 
     # Simple Optional Features
     turn: int | None = None

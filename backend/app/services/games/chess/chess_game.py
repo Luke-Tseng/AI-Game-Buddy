@@ -23,9 +23,7 @@ class ChessSystem(GameSystem[ChessState, ChessAction]):
         return ChessState(
             player_ids=selected_players,
             turn=1,
-            meta={
-                "current_player_index": 0,
-            },
+            current_player_index=0,
         )
 
     def _create_board_from_state(self, state: ChessState) -> chess.Board:
@@ -41,16 +39,13 @@ class ChessSystem(GameSystem[ChessState, ChessAction]):
         board = self._create_board_from_state(state=state)
 
         if action.type == "RESIGN":
-            current_player_index = state.meta["current_player_index"]
+            current_player_index = state.current_player_index
             winner = "white" if board.turn == chess.BLACK else "black"
             game_result = f"{winner}_wins"
             new_state = state.model_copy(
                 update={
                     "game_result": game_result,
                     "finished": True,
-                    "meta": {
-                        **state.meta,
-                    },
                 },
                 deep=True,
             )
@@ -61,7 +56,7 @@ class ChessSystem(GameSystem[ChessState, ChessAction]):
 
         new_move_history = state.move_history + [action.payload.move]
 
-        current_player_index = state.meta["current_player_index"]
+        current_player_index = state.current_player_index
         next_player_index = 1 - current_player_index
 
         game_result = None
@@ -76,16 +71,12 @@ class ChessSystem(GameSystem[ChessState, ChessAction]):
         ):
             game_result = "draw"
 
-        meta = {
-            "current_player_index": next_player_index,
-        }
-
         new_state = ChessState(
             finished=game_result is not None,
             game_id=state.game_id,
             player_ids=state.player_ids,
             turn=state.turn + 1,
-            meta=meta,
+            current_player_index=next_player_index,
             board_fen=board.fen(),
             game_result=game_result,
             move_history=new_move_history,
@@ -100,7 +91,7 @@ class ChessSystem(GameSystem[ChessState, ChessAction]):
         if state.finished:
             return []
 
-        current_player_index = state.meta["current_player_index"]
+        current_player_index = state.current_player_index
         if state.player_ids[current_player_index] != player_id:
             return []
 
@@ -120,7 +111,7 @@ class ChessSystem(GameSystem[ChessState, ChessAction]):
         if state.finished:
             raise ValueError("Game is already finished.")
 
-        current_player_index = state.meta["current_player_index"]
+        current_player_index = state.current_player_index
         if state.player_ids[current_player_index] != player_id:
             raise ValueError("It's not your turn.")
 
