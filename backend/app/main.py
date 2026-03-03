@@ -9,7 +9,12 @@ from opentelemetry import _logs, trace
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from app.config import settings
-from app.dependencies import get_blob_service, get_cosmos_service, get_redis_service
+from app.dependencies import (
+    get_blob_service,
+    get_cosmos_service,
+    get_mcp_server,
+    get_redis_service,
+)
 from app.redis_listener import RedisListener
 from app.routers import (
     accounts_router,
@@ -80,6 +85,9 @@ logger = logging.getLogger(__name__)
 
 FastAPIInstrumentor.instrument_app(app)
 
+mcp_server = get_mcp_server()
+app.mount("/mcp", mcp_server.sse_app())
+
 app.include_router(accounts_router.router)
 app.include_router(chat_router.router)
 app.include_router(document_router.router)
@@ -93,4 +101,9 @@ app.include_router(websocket_router.router)
 
 @app.get("/")
 def test():
-    return {"Hello": "World"}
+    return {"status": "ok"}
+
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}

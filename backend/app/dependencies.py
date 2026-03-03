@@ -9,6 +9,13 @@ from app.services.redis_service import RedisService
 from app.services.room_service import RoomService
 from app.services.user_service import UserService
 
+from .mcp_server import create_mcp_server
+
+
+@lru_cache
+def get_mcp_server():
+    return create_mcp_server(room_service=get_room_service())
+
 
 @lru_cache
 def get_cosmos_service() -> CosmosService:
