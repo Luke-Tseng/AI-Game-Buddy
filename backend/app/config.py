@@ -22,6 +22,7 @@ class Settings:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     PROJECT_ENDPOINT = os.getenv("PROJECT_ENDPOINT")
     REDIS_CONNECTION_URL = os.getenv("REDIS_CONNECTION_URL")
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
     # const variables
     ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Token valid for 30 minutes

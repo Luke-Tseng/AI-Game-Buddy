@@ -628,3 +628,5 @@ class RoomService:
                 return room == room_id
 
         return False
+
+    # TODO: Add and remove agent functions
