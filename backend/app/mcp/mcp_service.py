@@ -1,9 +1,9 @@
+from app.services.game_service_factory import GameServiceFactory
+from app.services.room_service import RoomService
 from fastmcp import FastMCP
 
-from app.services.game_service_factory import GameServiceFactory
-from app.services.games.chess.chess_tools import chess_tools
-from app.services.lobby_tools import lobby_tools
-from app.services.room_service import RoomService
+from .chess_tools import chess_tools
+from .lobby_tools import lobby_tools
 
 
 class MCPService:
@@ -11,7 +11,9 @@ class MCPService:
     Service to manage the FastMCP server instance and tool registrations.
     """
 
-    def __init__(self, room_service: RoomService, game_service_factory: GameServiceFactory):
+    def __init__(
+        self, room_service: RoomService, game_service_factory: GameServiceFactory
+    ):
         self.mcp = FastMCP("AI-Game-Buddy-MCP-Server")
         self.room_service = room_service
         self.game_service_factory = game_service_factory

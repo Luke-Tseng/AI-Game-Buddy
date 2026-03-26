@@ -2,9 +2,12 @@ import logging
 
 from app.schemas import GameUpdate
 from app.services.game_service_factory import GameServiceFactory
+from app.services.games.chess.chess_interface import (
+    ChessAction,
+    ChessMovePayload,
+    ChessState,
+)
 from app.services.room_service import RoomService
-
-from .chess_interface import ChessAction, ChessMovePayload, ChessState
 
 logger = logging.getLogger(__name__)
 
@@ -47,12 +50,16 @@ def chess_tools(
 
         room = await room_service.get_room(room_id)
         if not room:
-            logger.error(f"Error in get_chess_board_representation: Room {room_id} not found")
+            logger.error(
+                f"Error in get_chess_board_representation: Room {room_id} not found"
+            )
             return {"error": f"Room {room_id} not found."}
 
         # Check if game_state exists
         if not room.game_state or room.game_state == {}:
-            logger.error("Error in get_chess_board_representation: Game has not been initialized yet")
+            logger.error(
+                "Error in get_chess_board_representation: Game has not been initialized yet"
+            )
             return {"error": "Game has not been initialized yet."}
 
         chess_system = game_service_factory.get_service(game_type="chess")
@@ -88,7 +95,9 @@ def chess_tools(
             return {"error": f"Room {room_id} not found."}
         # Check if game_state exists
         if not room.game_state or room.game_state == {}:
-            logger.error("Error in list_legal_chess_moves: Game has not been initialized yet")
+            logger.error(
+                "Error in list_legal_chess_moves: Game has not been initialized yet"
+            )
             return {"error": "Game has not been initialized yet."}
 
         chess_system = game_service_factory.get_service(game_type="chess")

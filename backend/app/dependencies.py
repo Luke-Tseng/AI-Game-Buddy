@@ -1,11 +1,11 @@
 from functools import lru_cache
 
+from app.mcp.mcp_service import MCPService
 from app.services.blob_service import BlobService
 from app.services.chat_service import ChatService
 from app.services.connection_service import ConnectionService
 from app.services.cosmos_service import CosmosService
 from app.services.game_service_factory import GameServiceFactory
-from app.services.mcp_service import MCPService
 from app.services.redis_service import RedisService
 from app.services.room_service import RoomService
 from app.services.user_service import UserService
