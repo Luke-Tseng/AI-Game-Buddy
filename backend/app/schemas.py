@@ -101,3 +101,20 @@ class Chat(BaseModel):
     users: set[str] = Field(default_factory=set)
     bots: set[str] = Field(default_factory=set)
     chat_log: list[ChatMessage] = Field(default_factory=list)
+
+# ---------- Agents ------------------
+class AgentProfile(BaseModel):
+    id: str  # profile id
+    name: str
+    system_prompt: str  # Initial prompt for agent
+    difficulty_level: int = Field(
+        default=5, gt=0, le=10
+    )  # playing difficulty from 1-10
+    traits: list[str] = []
+
+
+class AgentSession(BaseModel):
+    id: str  # session id
+    room_id: str
+    profile_id: str  # profile selected for session
+    history: list[dict] = []

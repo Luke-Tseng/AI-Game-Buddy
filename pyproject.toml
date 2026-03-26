@@ -159,4 +159,5 @@ dependencies = [
     "zipp==3.23.0",
     "fastmcp>=2.12.5",
     "argon2-cffi>=25.1.0",
+    "google-generativeai>=0.8.6",
 ]
