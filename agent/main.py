@@ -1,10 +1,9 @@
 import asyncio
-import os
+
 import google.generativeai as genai
-from google.generativeai.types import content_types
 from mcp.client.session import ClientSession
-from mcp.client.stdio import StdioServerParameters, stdio_client
 from pydantic import BaseModel, Field
+
 
 class AgentProfile(BaseModel):
     id: str  # profile id

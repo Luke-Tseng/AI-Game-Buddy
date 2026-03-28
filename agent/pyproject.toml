@@ -8,3 +8,8 @@ dependencies = [
     "google-generativeai>=0.8.6",
     "mcp>=1.26.0",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.8",
+]
