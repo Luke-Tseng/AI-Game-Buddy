@@ -1,4 +1,5 @@
 import pytest
+
 from app.services.games.ulttt.ultimate_tic_tac_toe import UltimateTicTacToeSystem
 from app.services.games.ulttt.ulttt_interface import (
     UltimateTicTacToeAction,

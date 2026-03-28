@@ -1,5 +1,4 @@
 import pytest
-
 from backend.app.services.games.lands import lands_vars as lv
 from backend.app.services.games.lands.lands import LandsSystem
 from backend.app.services.games.lands.lands_interface import (

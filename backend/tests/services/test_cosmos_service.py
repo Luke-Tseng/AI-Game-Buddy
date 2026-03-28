@@ -1,9 +1,10 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from app.services import cosmos_service
 from azure.cosmos.exceptions import CosmosHttpResponseError, CosmosResourceNotFoundError
 from fastapi import HTTPException
+
+from app.services import cosmos_service
 
 # --- Mocks for Azure SDK objects ---
 

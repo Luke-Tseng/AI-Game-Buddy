@@ -115,6 +115,7 @@ def chess_tools(
             "legal_moves": moves,
         }
 
+    # TODO: Add parameter for agent id
     @mcp.tool()
     async def play_chess_move(room_id: str, move_uci: str) -> dict:
         """

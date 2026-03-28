@@ -1,10 +1,11 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from app.schemas import User, UserCreate
-from app.services.user_service import UserService
 from fastapi import HTTPException
 from pydantic import SecretStr
+
+from app.schemas import User, UserCreate
+from app.services.user_service import UserService
 
 # --- Fixtures for Mocking and Test Data ---
 

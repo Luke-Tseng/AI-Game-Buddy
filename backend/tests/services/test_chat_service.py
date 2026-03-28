@@ -1,8 +1,9 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from app.services.chat_service import ChatService
 from fastapi import HTTPException
+
+from app.services.chat_service import ChatService
 
 # --- Test Data Constants ---
 TEST_USER_ID = "user-123"

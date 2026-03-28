@@ -1,6 +1,7 @@
+from fastmcp import FastMCP
+
 from app.services.game_service_factory import GameServiceFactory
 from app.services.room_service import RoomService
-from fastmcp import FastMCP
 
 from .chess_tools import chess_tools
 from .lobby_tools import lobby_tools

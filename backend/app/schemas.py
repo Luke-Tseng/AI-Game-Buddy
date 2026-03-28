@@ -102,6 +102,7 @@ class Chat(BaseModel):
     bots: set[str] = Field(default_factory=set)
     chat_log: list[ChatMessage] = Field(default_factory=list)
 
+
 # ---------- Agents ------------------
 class AgentProfile(BaseModel):
     id: str  # profile id

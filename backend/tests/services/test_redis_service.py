@@ -2,9 +2,10 @@ import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from app.services.redis_service import RedisService
 from fastapi import HTTPException
 from redis.exceptions import ConnectionError, RedisError
+
+from app.services.redis_service import RedisService
 
 
 # --- Tests for the __init__ method ---

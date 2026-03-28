@@ -40,7 +40,7 @@ def lobby_tools(mcp, room_service: RoomService):
             "game_type": room.game_type,
             "users": room.users,
             "is_agent_turn": False,
-            "game_status": "waiting" if not room.game_state else "active"
+            "game_status": "waiting" if not room.game_state else "active",
         }
 
         return manifest

@@ -1,4 +1,5 @@
 import pytest
+
 from app.services.game_service_factory import GameServiceFactory
 from app.services.games.game_interface import GameSystem
 

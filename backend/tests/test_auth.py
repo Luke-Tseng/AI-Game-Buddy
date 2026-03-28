@@ -2,9 +2,10 @@ from datetime import timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from app import auth
 from fastapi import HTTPException, WebSocket, status
 from pydantic import SecretStr
+
+from app import auth
 
 # --- Test Password Hashing ---
 

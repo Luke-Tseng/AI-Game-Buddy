@@ -1,9 +1,10 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from fastapi import HTTPException
+
 from app.schemas import RoomCreate
 from app.services.room_service import RoomService
-from fastapi import HTTPException
 
 # --- Test Data Constants ---
 TEST_USER_ID = "user-123"
