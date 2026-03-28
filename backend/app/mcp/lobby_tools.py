@@ -15,7 +15,7 @@ def lobby_tools(mcp, room_service: RoomService):
     """
 
     @mcp.tool()
-    async def get_room_manifest(room_id: str, user_id: str) -> dict:
+    async def get_room_manifest(room_id: str) -> dict:
         """
         Retrieves the room's current activity and the agent's role within it.
 
@@ -29,8 +29,6 @@ def lobby_tools(mcp, room_service: RoomService):
             dict: A manifest containing:
                 - game_type (str): The identifier for the active game (e.g., 'chess').
                 - users (list[str]): All users currently present in the room lobby.
-                - player_ids (list[str]): The specific users assigned to the active game.
-                - agent_role_index (int | None): The agent's position in the player list.
                 - is_agent_turn (bool): Whether the game logic expects a move from this agent.
                 - game_status (str): Current state (e.g., 'waiting', 'active').
         """
@@ -41,8 +39,6 @@ def lobby_tools(mcp, room_service: RoomService):
         manifest = {
             "game_type": room.game_type,
             "users": room.users,
-            "player_ids": [],
-            "agent_role_index": None,
             "is_agent_turn": False,
             "game_status": "waiting" if not room.game_state else "active"
         }
