@@ -22,7 +22,7 @@ COPY --chown=appuser:appuser pyproject.toml uv.lock* ./
 RUN uv pip install --no-cache -r pyproject.toml
 
 # Copy application code
-COPY --chown=appuser:appuser backend/ .
+COPY --chown=appuser:appuser . .
 
 # Switch to non-root user
 USER appuser
