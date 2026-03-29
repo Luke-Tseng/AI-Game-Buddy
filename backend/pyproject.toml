@@ -161,3 +161,9 @@ dependencies = [
     "argon2-cffi>=25.1.0",
     "google-generativeai>=0.8.6",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "ruff>=0.12.12",
+]
