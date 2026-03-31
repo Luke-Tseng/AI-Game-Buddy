@@ -1,10 +1,45 @@
+[tool.pytest.ini_options]
+pythonpath = [
+    ".",
+]
+
+[tool.ruff]
+exclude = [
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    ".vscode",
+]
+line-length = 88
+indent-width = 4
+
+[tool.ruff.lint]
+ignore = ["B008"]
+extend-ignore = ["E501"]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = 20
+preview = true
+
 [project]
 name = "ai-game-buddy-agent"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "Agent microservice for AI Game Buddy"
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi>=0.135.2",
     "google-generativeai>=0.8.6",
     "mcp>=1.26.0",
 ]

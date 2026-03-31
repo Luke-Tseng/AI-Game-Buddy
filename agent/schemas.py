@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+
 class AgentProfile(BaseModel):
     id: str  # profile id
     name: str
@@ -15,3 +16,8 @@ class AgentSession(BaseModel):
     room_id: str
     profile_id: str  # profile selected for session
     history: list[dict] = []
+
+class ConnectAgentRequest(BaseModel):
+    profile: AgentProfile
+    session: AgentSession
+    mcp_sse_url: str

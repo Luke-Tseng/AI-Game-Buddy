@@ -4,7 +4,6 @@ include = ["backend*"]
 [tool.pytest.ini_options]
 pythonpath = [
     ".",
-    "backend",
 ]
 
 [tool.ruff]
@@ -13,7 +12,6 @@ exclude = [
     ".ruff_cache",
     ".venv",
     ".vscode",
-    "node_modules",
 ]
 line-length = 88
 indent-width = 4
@@ -124,9 +122,6 @@ dependencies = [
     "pydantic_core==2.33.2",
     "Pygments==2.19.2",
     "PyJWT==2.10.1",
-    "pytest==8.4.1",
-    "pytest-asyncio==1.1.0",
-    "pytest-mock==3.14.1",
     "python-dotenv==1.1.1",
     "python-jose==3.5.0",
     "python-multipart==0.0.20",
@@ -138,7 +133,6 @@ dependencies = [
     "rich-toolkit==0.15.0",
     "rignore==0.5.1",
     "rsa==4.9.1",
-    "ruff==0.12.12",
     "sentry-sdk==2.32.0",
     "shellingham==1.5.4",
     "six==1.17.0",

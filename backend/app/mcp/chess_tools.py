@@ -20,7 +20,7 @@ def chess_tools(
     """
 
     @mcp.tool()
-    async def get_chess_board_representation(room_id: str) -> dict:
+    async def get_chess_game_state(room_id: str) -> dict:
         """
         Returns a dictionary representation of the current chess game state
 
