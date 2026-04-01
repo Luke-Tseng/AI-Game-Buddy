@@ -63,8 +63,7 @@ async def logout_account(response: Response):
         key="refresh_token", httponly=True, secure=True, samesite="none"
     )
 
-    response.status_code = status.HTTP_204_NO_CONTENT
-    return response
+    return
 
 
 # Call refresh endpoint if jwt/cookie is expired
@@ -97,7 +96,7 @@ async def refresh_access_token(
             samesite="none",
             max_age=int(access_token_expires.total_seconds()),
         )
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
+        return
     except JWTError as e:
         raise HTTPException(
             status_code=401, detail="Invalid or expired refresh token"
@@ -124,7 +123,7 @@ async def delete_account(
         key="refresh_token", httponly=True, secure=True, samesite="none"
     )
 
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return
 
 
 @router.get("/me", response_model=UserResponse)

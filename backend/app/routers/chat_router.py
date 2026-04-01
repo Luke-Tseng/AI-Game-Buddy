@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app import auth
 from app.dependencies import get_chat_service
@@ -41,7 +41,7 @@ async def join_chat(
     try:
         await chat_service.join_chat(chat_id=chat_id, user_id=user_id)
         # Return no content, new users will only see new messages of the chat
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
+        return
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
@@ -59,7 +59,7 @@ async def leave_chat(
 ):
     try:
         await chat_service.leave_chat(chat_id=chat_id, user_id=user_id)
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
+        return
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
@@ -76,7 +76,7 @@ async def delete_chat(
 ):
     try:
         await chat_service.delete_chat(chat_id=chat_id)
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
+        return
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except HTTPException as e:

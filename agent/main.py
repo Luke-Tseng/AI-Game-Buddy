@@ -4,7 +4,7 @@ import os
 from contextlib import asynccontextmanager
 
 import google.generativeai as genai
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from mcp.client.session import ClientSession
 
 from schemas import ConnectAgentRequest
@@ -27,16 +27,20 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+
 @app.post("/connect")
 async def connect_agent(req: ConnectAgentRequest):
     """Allows backend to connect agent to the room"""
     return
 
+
 @app.post("/disconnect")
-async def disconnect_agent(room_id: str, profile_id: str):
+async def disconnect_agent(
+    room_id: str, profile_id: str, status_code=status.HTTP_204_NO_CONTENT
+):
     """Allows backend to disconnect agent out of the room."""
     task_key = f"{room_id}_{profile_id}"
     if task_key in active_agents:
-        active_agents[task_key].cancel() # Triggers asyncio.CancelledError in the loop
-        return {"status": "success", "message": "Agent disconnected."}
-    return {"status": "error", "message": "Agent not found."}
+        active_agents[task_key].cancel()  # Triggers asyncio.CancelledError in the loop
+        return
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found.")

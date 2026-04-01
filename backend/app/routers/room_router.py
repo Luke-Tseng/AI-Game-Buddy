@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app import auth
 from app.dependencies import get_game_service_factory, get_room_service
@@ -66,7 +66,7 @@ async def leave_room(
 ):
     try:
         await room_service.leave_room(room_id=room_id, user_id=user_id)
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
+        return
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
@@ -85,7 +85,7 @@ async def delete_room(
 ):
     try:
         await room_service.delete_room(room_id=room_id)
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
+        return
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
@@ -168,7 +168,7 @@ async def end_game(
 ):
     try:
         await room_service.delete_game_state(room_id=room_id)
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
+        return
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
