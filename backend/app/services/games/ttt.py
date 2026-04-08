@@ -9,6 +9,7 @@ class TicTacToeState(GameState):
     board: list[list[str | None]] = Field(
         default_factory=lambda: [[None, None, None] for _ in range(3)]
     )
+    winner: int | None
 
 
 class TicTacToeMovePayload(BaseModel):
@@ -27,7 +28,9 @@ class TicTacToeSystem(GameSystem):
         if len(player_ids) != 2:
             raise ValueError("TicTacToe requires exactly 2 players.")
         return TicTacToeState(
-            player_ids=player_ids, meta={"winner": None, "curr_player_index": 0}
+            player_ids=player_ids,
+            winner=None,
+            current_player_index=0,
         )
 
     def make_action(
@@ -42,16 +45,16 @@ class TicTacToeSystem(GameSystem):
         row, col = action.payload.row, action.payload.col
 
         # Apply the move
-        marker = "X" if state.meta["curr_player_index"] == 1 else "O"
+        marker = "X" if state.current_player_index == 1 else "O"
         state.board[row][col] = marker
 
         # Check for a winner
         if self.is_win(row, col):
-            state.meta["winner"] = action.player_id
+            state.winner = action.player_id
 
         # Update whose turn it is
-        state.meta["curr_player_index"] = (
-            1 - state.meta["curr_player_index"]
+        state.current_player_index = (
+            1 - state.current_player_index
         )  # Toggles between 0 and 1
 
         return state
@@ -79,7 +82,7 @@ class TicTacToeSystem(GameSystem):
             raise ValueError("Invalid player ID.")
 
         # Not player's turn
-        if state.player_ids.index(player_id) != state.meta["curr_player_index"]:
+        if state.player_ids.index(player_id) != state.current_player_index:
             raise ValueError("It's not your turn.")
 
         row, col = action.payload.row, action.payload.col
@@ -88,7 +91,7 @@ class TicTacToeSystem(GameSystem):
 
     def is_game_finished(self, state: TicTacToeState) -> bool:
         """Returns whether the game is finished"""
-        return state.meta["winner"] is not None
+        return state.winner is not None
 
     def is_win(self, row: int, col: int, state: TicTacToeState) -> bool:
         """Check if the current player has won with last move"""

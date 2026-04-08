@@ -24,7 +24,9 @@ class UltimateTicTacToeSystem(
         if len(player_ids) != 2:
             raise ValueError("Ultimate Tic-Tac-Toe requires exactly 2 players.")
         return UltimateTicTacToeState(
-            player_ids=player_ids, meta={"winner": None, "curr_player_index": 0}
+            player_ids=player_ids,
+            winner=None,
+            current_player_index=0,
         )
 
     @validate_call
@@ -39,14 +41,14 @@ class UltimateTicTacToeSystem(
 
         new_state = state.model_copy(deep=True)
         if action.type == "RESIGN":
-            new_state.meta["winner"] = new_state.player_ids[
-                1 - new_state.meta["curr_player_index"]
+            new_state.winner = new_state.player_ids[
+                1 - new_state.current_player_index
             ]
             new_state.finished = True
             return new_state
 
         p = action.payload
-        marker = "X" if new_state.meta["curr_player_index"] == 0 else "O"
+        marker = "X" if new_state.current_player_index == 0 else "O"
 
         # Apply the move to the board.
         new_state.large_board[p.board_row][p.board_col][p.row][p.col] = marker
@@ -65,7 +67,7 @@ class UltimateTicTacToeSystem(
                 new_state.meta_board
             )
             if game_status:
-                new_state.meta["winner"] = player_id if game_status != "-" else "Draw"
+                new_state.winner = player_id if game_status != "-" else "Draw"
                 new_state.finished = True
                 return new_state  # Game Over
 
@@ -78,7 +80,7 @@ class UltimateTicTacToeSystem(
             new_state.active_board = (p.row, p.col)
 
         # Switch to the next player.
-        new_state.meta["curr_player_index"] = 1 - new_state.meta["curr_player_index"]
+        new_state.current_player_index = 1 - new_state.current_player_index
 
         return new_state
 
@@ -88,7 +90,7 @@ class UltimateTicTacToeSystem(
     ) -> list[UltimateTicTacToeAction]:
         if (
             state.finished
-            or state.player_ids[state.meta["curr_player_index"]] != player_id
+            or state.player_ids[state.current_player_index] != player_id
         ):
             return []
 
@@ -143,7 +145,7 @@ class UltimateTicTacToeSystem(
         if player_id not in state.player_ids:
             raise ValueError("Invalid player ID.")
 
-        if state.player_ids.index(player_id) != state.meta["curr_player_index"]:
+        if state.player_ids.index(player_id) != state.current_player_index:
             raise ValueError("It's not your turn.")
 
         if action.type == "PLACE_MARKER":

@@ -16,11 +16,9 @@ const initialGameState: UltimateTicTacToeState = {
     game_id: "sample-game-123",
     player_ids: ["player-1", "player-2"],
     finished: false,
-    meta: {
-        curr_player_index: 0,
-        player_symbols: { "player-1": "X", "player-2": "O" },
-        winner: null,
-    },
+    curr_player_index: 0,
+    player_symbols: { "player-1": "X", "player-2": "O" },
+    winner: null,
     turn: 1,
     large_board: Array(3)
         .fill(null)
@@ -54,8 +52,8 @@ export default function UltimateTicTacToePage() {
             JSON.stringify(gameState)
         );
         const currentPlayerSymbol =
-            newState.meta.player_symbols[
-                newState.player_ids[newState.meta.curr_player_index]
+            newState.player_symbols[
+                newState.player_ids[newState.curr_player_index]
             ];
 
         // 1. Place the piece on the board.
@@ -67,8 +65,8 @@ export default function UltimateTicTacToePage() {
         newState.active_board = [row, col];
 
         // 3. Switch the current player index for the next turn.
-        newState.meta.curr_player_index =
-            (newState.meta.curr_player_index + 1) % newState.player_ids.length;
+        newState.curr_player_index =
+            (newState.curr_player_index + 1) % newState.player_ids.length;
         newState.turn = (newState.turn ?? 0) + 1;
 
         // Update the state to re-render the component.
@@ -80,8 +78,8 @@ export default function UltimateTicTacToePage() {
     };
 
     const currentPlayerSymbol =
-        gameState.meta.player_symbols?.[
-            gameState.player_ids[gameState.meta.curr_player_index]
+        gameState.player_symbols?.[
+            gameState.player_ids[gameState.curr_player_index]
         ] || "Unknown";
 
     return (

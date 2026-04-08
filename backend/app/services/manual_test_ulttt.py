@@ -79,7 +79,7 @@ def main():
     while not state.finished:
         print_board(state)
 
-        curr_player_index = state.meta["curr_player_index"]
+        curr_player_index = state.current_player_index
         player_id = state.player_ids[curr_player_index]
         player_marker = "X" if curr_player_index == 0 else "O"
 
@@ -117,7 +117,7 @@ def main():
 
     # Game Over
     print_board(state)
-    winner = state.meta.get("winner")
+    winner = state.winner
     if winner == "Draw":
         print("It's a draw! The game is over.")
     elif winner:

@@ -47,7 +47,7 @@ class TestInitializeGame:
 
         # ASSERT
         assert state.player_ids == ["player1", "player2"]
-        assert state.meta["current_player_index"] == 0
+        assert state.current_player_index == 0
         assert (
             state.board_fen
             == "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -66,7 +66,7 @@ class TestMakeAction:
         new_state = chess_system.make_action(initial_state, "player1", action)
 
         assert new_state.turn == 2
-        assert new_state.meta["current_player_index"] == 1
+        assert new_state.current_player_index == 1
         assert new_state.move_history == ["e2e4"]
         assert new_state.finished is False
 
@@ -74,7 +74,7 @@ class TestMakeAction:
         fools_mate_fen = "rnbqkbnr/pppp1ppp/8/4p3/5PP1/8/PPPPP2P/RNBQKBNR b KQkq - 0 2"
         state = ChessState(
             player_ids=["p1", "p2"],
-            meta={"current_player_index": 1},
+            current_player_index=1,
             board_fen=fools_mate_fen,
             turn=3,
         )
@@ -172,7 +172,7 @@ class TestChessStateValidation:
             ChessState(
                 player_ids=["p1", "p2"],
                 board_fen=invalid_fen,
-                meta={"current_player_index": 0},
+                current_player_index=0,
             )
 
     def test_illegal_position_raises_error(self):
@@ -182,7 +182,7 @@ class TestChessStateValidation:
             ChessState(
                 player_ids=["p1", "p2"],
                 board_fen=illegal_fen,
-                meta={"current_player_index": 0},
+                current_player_index=0,
             )
 
     def test_inconsistent_finished_flag_raises_error(self):
@@ -193,7 +193,7 @@ class TestChessStateValidation:
                 player_ids=["p1", "p2"],
                 game_result="white_wins",
                 finished=False,
-                meta={"current_player_index": 0},
+                current_player_index=0,
             )
 
     def test_inconsistent_turn_white_raises_error(self):
@@ -205,7 +205,7 @@ class TestChessStateValidation:
             ChessState(
                 player_ids=["p1", "p2"],
                 board_fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-                meta={"current_player_index": 1},
+                current_player_index=1,
             )
 
     def test_inconsistent_turn_black_raises_error(self):
@@ -217,5 +217,5 @@ class TestChessStateValidation:
             ChessState(
                 player_ids=["p1", "p2"],
                 board_fen="rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
-                meta={"current_player_index": 0},
+                current_player_index=0,
             )

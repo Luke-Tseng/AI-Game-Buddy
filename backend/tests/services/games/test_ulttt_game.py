@@ -64,7 +64,7 @@ class TestInitializeGame:
         state = ulttt_system.initialize_game(player_ids)
         assert isinstance(state, UltimateTicTacToeState)
         assert state.player_ids == player_ids
-        assert state.meta["curr_player_index"] == 0
+        assert state.current_player_index == 0
         assert state.active_board is None
 
     def test_initialization_fails_with_wrong_player_count(
@@ -87,7 +87,7 @@ class TestMakeAction:
 
         assert new_state.large_board[0][0][1][1] == "X"
         assert new_state.active_board == (1, 1)  # Next player is sent to board 1,1
-        assert new_state.meta["curr_player_index"] == 1  # Player index flips
+        assert new_state.current_player_index == 1  # Player index flips
 
     def test_win_small_board_updates_meta_board(
         self, ulttt_system: UltimateTicTacToeSystem, player_ids: list[str]
@@ -100,7 +100,7 @@ class TestMakeAction:
         state.large_board[1][1][0][0] = "O"
         state.large_board[0][0][0][1] = "X"
         state.large_board[1][1][0][1] = "O"
-        state.meta["curr_player_index"] = 0
+        state.current_player_index = 0
         state.active_board = (0, 0)
 
         action = UltimateTicTacToeAction(
@@ -136,7 +136,7 @@ class TestMakeAction:
         new_state = ulttt_system.make_action(initial_state, "player1", action)
 
         assert new_state.finished is True
-        assert new_state.meta["winner"] == "player2"  # The other player wins
+        assert new_state.winner == "player2"  # The other player wins
 
 
 class TestGetValidActions:
@@ -216,10 +216,10 @@ class TestIsActionValid:
     ):
         # player 1 plays
         initial_state.large_board[0][0][0][0] = "X"
-        initial_state.meta["curr_player_index"] = 1
+        initial_state.current_player_index = 1
         # player 2 plays
         initial_state.large_board[0][0][1][0] = "O"
-        initial_state.meta["curr_player_index"] = 0
+        initial_state.current_player_index = 0
 
         action = UltimateTicTacToeAction(
             payload=UltimateTicTacToePayload(board_row=0, board_col=0, row=0, col=0)

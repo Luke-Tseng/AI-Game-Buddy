@@ -24,6 +24,8 @@ class UltimateTicTacToeState(GameState):
     # Determines which small board the next player must play in.
     # None indicates the player can choose any board.
     active_board: tuple[int, int] | None = None
+    winner: int = None
+
 
     @model_validator(mode="after")
     def check_legal_state(self) -> "UltimateTicTacToeState":
@@ -62,7 +64,7 @@ class UltimateTicTacToeState(GameState):
                 for cell in small_row
             )
 
-            player_index = self.meta.get("curr_player_index")
+            player_index = self.current_player_index
             if player_index == 0:  # X's turn
                 if x_count != o_count:
                     raise ValueError(
@@ -81,10 +83,10 @@ class UltimateTicTacToeState(GameState):
                 raise ValueError(
                     "Game is marked as finished, but there is no winner or draw."
                 )
-            if self.meta.get("winner") is None:
+            if self.winner is None:
                 raise ValueError("Game is marked as finished, but winner is not set.")
         else:
-            if game_status and self.meta.get("winner") is not None:
+            if game_status and self.winner is not None:
                 raise ValueError(
                     "Game is not marked as finished, but there is a winner."
                 )
