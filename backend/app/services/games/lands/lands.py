@@ -21,15 +21,14 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
             raise ValueError("Lands requires exactly 2 players.")
 
         new_state = LandsState(
+            turn=1,
             boards={pid: [0, 0, 0, 0, 0] for pid in player_ids},
             discard={pid: [0, 0, 0, 0, 0] for pid in player_ids},
             player_ids=player_ids,
-            meta={
-                "winner": None,
-                "main_player_index": 0,
-                "countered": 0,
-                "curr_player_index": 0,
-            },
+            winner=None,
+            main_player_index=0,
+            countered=0,
+            current_player_index=0,
             private_state=PrivateStates(
                 states={
                     pid: LandsPrivateState(
@@ -54,16 +53,16 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
         new_state = state.model_copy(deep=True)
         match action.type:
             case "RESIGN":
-                new_state.meta["winner"] = new_state.player_ids[
-                    1 - new_state.meta["curr_player_index"]
+                new_state.winner = new_state.player_ids[
+                    1 - new_state.current_player_index
                 ]
                 new_state.finished = True
             case "PLAY_ENERGY":
                 card_type = action.payload.target
                 new_state.private_state.states[player_id].hand[card_type] -= 1
                 new_state.pending_card = card_type
-                new_state.meta["curr_player_index"] = (
-                    1 - new_state.meta["curr_player_index"]
+                new_state.current_player_index = (
+                    1 - new_state.current_player_index
                 )
                 new_state.phase = new_state.phase.next_phase()
             case "COUNTER":
@@ -72,29 +71,27 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
                     # Move to resolution phase
                     new_state.phase = new_state.phase.next_phase()
                     if (
-                        new_state.meta["countered"] % 2 == 0
+                        new_state.countered % 2 == 0
                     ):  # Not countered or countered the counter
                         # Card goes to the board
                         main_player_id = state.player_ids[
-                            state.meta["main_player_index"]
+                            state.main_player_index
                         ]
-                        new_state.meta["curr_player_index"] = new_state.meta[
-                            "main_player_index"
-                        ]
+                        new_state.current_player_index = new_state.main_player_index
                         card_type = state.pending_card
                         if card_type is not None:
                             new_state.boards[main_player_id][card_type] += 1
 
                         # Check for the winner
                         new_state = self._check_win_condition(new_state, main_player_id)
-                        if new_state.meta.get("winner"):
+                        if new_state.winner:
                             return new_state
 
                         new_state = self._resolve_after_counter_fail(new_state)
                     else:
                         # Counter went through, so main player loses their card
                         main_player_id = state.player_ids[
-                            state.meta["main_player_index"]
+                            state.main_player_index
                         ]
                         card_type = state.pending_card
                         if card_type is not None:
@@ -103,7 +100,7 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
                         new_state = self._start_turn(new_state)
                 else:  # Countering
                     # If it is an initial counter
-                    if new_state.meta["countered"] == 0:
+                    if new_state.countered == 0:
                         pending_card = state.pending_card
                         if pending_card is not None:
                             new_state.private_state.states[player_id].hand[
@@ -114,14 +111,14 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
                                 pending_card
                             ] -= 1
                             new_state.discard[player_id][pending_card] += 1
-                            new_state.meta["countered"] += 1
+                            new_state.countered += 1
                     else:  # If it is a counter to a counter
                         new_state.private_state.states[player_id].hand[lv.WATER] -= 2
                         new_state.discard[player_id][lv.WATER] += 2
-                        new_state.meta["countered"] += 1
+                        new_state.countered += 1
                     # Switch the turn. The other player can counter again
-                    new_state.meta["curr_player_index"] = (
-                        1 - new_state.meta["curr_player_index"]
+                    new_state.current_player_index = (
+                        1 - new_state.current_player_index
                     )
             case "CHOOSE_TARGET":  # Resolving the effect of a card
                 new_state = self._resolve_target_choice(
@@ -135,7 +132,7 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
         # If the game is finished or it's not the player's turn, they cannot act
         if (
             state.finished
-            or player_id != state.player_ids[state.meta["curr_player_index"]]
+            or player_id != state.player_ids[state.current_player_index]
         ):
             return valid_actions
 
@@ -167,7 +164,7 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
                 if pending_card is not None:
                     hand = state.private_state.states[player_id].hand
                     # If it is the first counter
-                    if state.meta["countered"] == 0:
+                    if state.countered == 0:
                         # Need 1 water and 1 matching card
                         if hand[lv.WATER] > 0 and hand[pending_card] > 0:
                             # Special case: if pending card is water, need 2 water cards
@@ -191,8 +188,8 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
                 if state.selection:
                     if (
                         state.pending_card == lv.DARKNESS
-                        and state.meta["curr_player_index"]
-                        == 1 - state.meta["main_player_index"]
+                        and state.current_player_index
+                        == 1 - state.main_player_index
                     ):
                         # If it is opponent's turn, they have to choose three cards from their hand to reveal
                         hand = state.private_state.states[player_id].hand
@@ -268,13 +265,13 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
 
     # Handles the turn logic after a counter has been fizzled
     def _resolve_after_counter_fail(self, state: LandsState) -> LandsState:
-        main_player_id = state.player_ids[state.meta["main_player_index"]]
-        opponent_id = state.player_ids[1 - state.meta["main_player_index"]]
+        main_player_id = state.player_ids[state.main_player_index]
+        opponent_id = state.player_ids[1 - state.main_player_index]
         card_type = state.pending_card
 
         match card_type:
             case lv.GRASS:
-                state.meta["curr_player_index"] = state.meta["main_player_index"]
+                state.current_player_index = state.main_player_index
                 state.selection = [
                     i
                     for i, count in enumerate(state.discard[main_player_id])
@@ -285,17 +282,17 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
                 state = self._end_turn(state)
                 state = self._start_turn(state)
             case lv.FIRE:
-                state.meta["curr_player_index"] = state.meta["main_player_index"]
+                state.current_player_index = state.main_player_index
                 state.selection = [
                     i for i, count in enumerate(state.boards[opponent_id]) if count > 0
                 ]
             case lv.DARKNESS:
                 # Opponent has to choose a card from their hand if they have any
-                state.meta["curr_player_index"] = 1 - state.meta["main_player_index"]
+                state.current_player_index = 1 - state.main_player_index
                 # Put copy of opponent's hand into selection
                 state.selection = list(state.private_state.states[opponent_id].hand)
             case lv.WATER:
-                state.meta["curr_player_index"] = state.meta["main_player_index"]
+                state.current_player_index = state.main_player_index
                 state.selection = [0, 1]  # 0: keep on top, 1: move to bottom
                 state.private_state.states[
                     main_player_id
@@ -307,13 +304,13 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
 
         # Check for 5 of the same type of energy
         if any(count >= 5 for count in board):
-            state.meta["winner"] = player_id
+            state.winner = player_id
             state.finished = True
             return state
 
         # Check for 1 of each type of energy
         if all(count >= 1 for count in board):
-            state.meta["winner"] = player_id
+            state.winner = player_id
             state.finished = True
             return state
 
@@ -325,7 +322,7 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
 
         # Draw one Card, but not on the first turn
         if state.turn > 1:
-            player_id = state.player_ids[state.meta["main_player_index"]]
+            player_id = state.player_ids[state.main_player_index]
             state = self._draw_cards(state, player_id, 1)
 
         # Move to Main Phase
@@ -334,11 +331,11 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
 
     def _end_turn(self, state: LandsState) -> LandsState:
         # switch main player
-        state.meta["main_player_index"] = 1 - state.meta["main_player_index"]
-        state.meta["curr_player_index"] = state.meta["main_player_index"]
+        state.main_player_index = 1 - state.main_player_index
+        state.current_player_index = state.main_player_index
 
         # Reset turn-specific variables
-        state.meta["countered"] = 0
+        state.countered = 0
         state.pending_card = None
         state.selection = None
         state.phase = state.phase.next_phase()  # Back to draw phase
@@ -349,7 +346,7 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
         self, state: LandsState, player_id: str, target: int
     ) -> LandsState:
         active_player_id = player_id
-        opponent_id = state.player_ids[1 - state.meta["curr_player_index"]]
+        opponent_id = state.player_ids[1 - state.current_player_index]
         card_type = state.pending_card
 
         match card_type:
@@ -368,11 +365,11 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
             case lv.DARKNESS:
                 # If it is opponent's turn, target is a chosen selection of cards from their hand to reveal
                 if (
-                    state.meta["curr_player_index"]
-                    == 1 - state.meta["main_player_index"]
+                    state.current_player_index
+                    == 1 - state.main_player_index
                 ):
                     state.selection = list(target)
-                    state.meta["curr_player_index"] = state.meta["main_player_index"]
+                    state.current_player_index = state.main_player_index
                 else:  # If it is main player's turn, target is a card to discard from opponent's hand
                     if target is not None:
                         state.private_state.states[opponent_id].hand[target] -= 1

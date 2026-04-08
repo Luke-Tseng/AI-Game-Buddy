@@ -67,6 +67,7 @@ class GameState(BaseModel):
     finished: bool = False  # Set True when game is finished
 
     # Simple Optional Features
+    current_player_index: int | None = None
     turn: int | None = None
     phase: Phase | None = None
 

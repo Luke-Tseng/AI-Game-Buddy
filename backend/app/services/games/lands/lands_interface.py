@@ -31,7 +31,6 @@ class LandsState(GameState):
     """
 
     # Public game areas
-    turn: int = 1  # Current turn number
     boards: dict[str, board]
     discard: dict[str, discard]
     phase: Phase = Field(
@@ -45,6 +44,9 @@ class LandsState(GameState):
             ],
         )
     )
+    winner: int | None
+    main_player_index: int
+    countered: int
 
     # Player-specific game areas
     private_state: PrivateStates[LandsPrivateState]

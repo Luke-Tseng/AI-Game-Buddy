@@ -19,7 +19,6 @@ class ChessState(GameState):
     )
     game_result: str | None = None
     move_history: list[str] = Field(default_factory=list)
-    current_player_index: Literal[0, 1]
 
     @model_validator(mode="after")
     def validate_chess_state(self) -> "ChessState":
