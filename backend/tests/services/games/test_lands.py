@@ -109,7 +109,7 @@ def test_darkness_effect_opponent_reveals(
     )
 
     # Opponent's turn to choose 3 cards to reveal
-    assert state.meta["curr_player_index"] == 1
+    assert state.current_player_index == 1
 
     # Opponent reveals 3 cards
     action = LandsAction(
@@ -119,7 +119,7 @@ def test_darkness_effect_opponent_reveals(
     state = lands_system.make_action(state, opponent_id, action)
 
     # Main player's turn to choose 1 to discard
-    assert state.meta["curr_player_index"] == 0
+    assert state.current_player_index == 0
     assert state.selection == [lv.GRASS, lv.LIGHTNING, lv.FIRE]
 
     action = LandsAction(type="CHOOSE_TARGET", payload=LandsPayload(target=lv.FIRE))
@@ -220,7 +220,7 @@ def test_win_condition_one_of_each(
         state, "player2", LandsAction(type="COUNTER", payload=LandsPayload(target=0))
     )
 
-    assert state.meta["winner"] == player_id
+    assert state.winner == player_id
 
 
 def test_deck_reshuffle(lands_system: LandsSystem, initial_state: LandsState):
@@ -375,7 +375,7 @@ def test_invalid_counter_action(lands_system: LandsSystem, initial_state: LandsS
     state_countered = lands_system.make_action(
         state_countered, opponent_id, counter_action
     )
-    assert state_countered.meta["countered"] == 1
+    assert state_countered.countered == 1
 
     # Test: Player 1 (now current) tries to counter back with insufficient water
     state_countered.private_state.states[player_id].hand[lv.WATER] = 1
@@ -442,7 +442,7 @@ def test_stress_game_simulation(lands_system: LandsSystem):
         for turn in range(150):  # Max 150 turns per game
             if state.finished:
                 # Check for valid win condition
-                winner_id = state.meta["winner"]
+                winner_id = state.winner
                 if winner_id:
                     winner_board = state.boards[winner_id]
                     win_by_5_same = any(count >= 5 for count in winner_board)
@@ -451,7 +451,7 @@ def test_stress_game_simulation(lands_system: LandsSystem):
                     assert win_by_5_same or win_by_1_each
                 break
 
-            current_player_id = state.player_ids[state.meta["curr_player_index"]]
+            current_player_id = state.player_ids[state.current_player_index]
             valid_actions = lands_system.get_valid_actions(state, current_player_id)[
                 1:
             ]  # Exclude "RESIGN" action
@@ -472,7 +472,7 @@ def test_stress_game_simulation(lands_system: LandsSystem):
                 discard_count = sum(state.discard[pid])
                 pending_count = (
                     1
-                    if pid == state.player_ids[state.meta["main_player_index"]]
+                    if pid == state.player_ids[state.main_player_index]
                     and state.pending_card is not None
                     and state.phase.current != "RESOLUTION_PHASE"
                     else 0
@@ -494,7 +494,7 @@ def test_resign_action(lands_system: LandsSystem, initial_state: LandsState):
     action = LandsAction(type="RESIGN", payload=None)
     final_state = lands_system.make_action(initial_state, player_id, action)
 
-    assert final_state.meta["winner"] == opponent_id
+    assert final_state.winner == opponent_id
     assert final_state.finished is True
 
 
@@ -514,10 +514,10 @@ def test_is_action_valid(lands_system: LandsSystem, initial_state: LandsState):
         lands_system.is_action_valid(initial_state, player_id, invalid_action)
 
     # Test invalid action: playing a card when it's not the player's turn
-    initial_state.meta["curr_player_index"] = 1  # It's opponent's turn
+    initial_state.current_player_index = 1  # It's opponent's turn
     with pytest.raises(ValueError):
         lands_system.is_action_valid(initial_state, player_id, valid_action)
-    initial_state.meta["curr_player_index"] = 0  # Reset turn
+    initial_state.current_player_index = 0  # Reset turn
 
     # Test invalid action: countering when it's not the counter phase
     invalid_action = LandsAction(type="COUNTER", payload=LandsPayload(target=0))

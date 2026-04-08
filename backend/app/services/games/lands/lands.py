@@ -61,9 +61,7 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
                 card_type = action.payload.target
                 new_state.private_state.states[player_id].hand[card_type] -= 1
                 new_state.pending_card = card_type
-                new_state.current_player_index = (
-                    1 - new_state.current_player_index
-                )
+                new_state.current_player_index = 1 - new_state.current_player_index
                 new_state.phase = new_state.phase.next_phase()
             case "COUNTER":
                 # Counter change stopped
@@ -74,9 +72,7 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
                         new_state.countered % 2 == 0
                     ):  # Not countered or countered the counter
                         # Card goes to the board
-                        main_player_id = state.player_ids[
-                            state.main_player_index
-                        ]
+                        main_player_id = state.player_ids[state.main_player_index]
                         new_state.current_player_index = new_state.main_player_index
                         card_type = state.pending_card
                         if card_type is not None:
@@ -90,9 +86,7 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
                         new_state = self._resolve_after_counter_fail(new_state)
                     else:
                         # Counter went through, so main player loses their card
-                        main_player_id = state.player_ids[
-                            state.main_player_index
-                        ]
+                        main_player_id = state.player_ids[state.main_player_index]
                         card_type = state.pending_card
                         if card_type is not None:
                             new_state.discard[main_player_id][card_type] += 1
@@ -117,9 +111,7 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
                         new_state.discard[player_id][lv.WATER] += 2
                         new_state.countered += 1
                     # Switch the turn. The other player can counter again
-                    new_state.current_player_index = (
-                        1 - new_state.current_player_index
-                    )
+                    new_state.current_player_index = 1 - new_state.current_player_index
             case "CHOOSE_TARGET":  # Resolving the effect of a card
                 new_state = self._resolve_target_choice(
                     new_state, player_id, action.payload.target
@@ -130,10 +122,7 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
     def get_valid_actions(self, state: LandsState, player_id: str) -> list[LandsAction]:
         valid_actions = []
         # If the game is finished or it's not the player's turn, they cannot act
-        if (
-            state.finished
-            or player_id != state.player_ids[state.current_player_index]
-        ):
+        if state.finished or player_id != state.player_ids[state.current_player_index]:
             return valid_actions
 
         # Always possible to resign for the current player
@@ -188,8 +177,7 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
                 if state.selection:
                     if (
                         state.pending_card == lv.DARKNESS
-                        and state.current_player_index
-                        == 1 - state.main_player_index
+                        and state.current_player_index == 1 - state.main_player_index
                     ):
                         # If it is opponent's turn, they have to choose three cards from their hand to reveal
                         hand = state.private_state.states[player_id].hand
@@ -364,10 +352,7 @@ class LandsSystem(GameSystem[LandsState, LandsAction]):
                 state = self._start_turn(state)
             case lv.DARKNESS:
                 # If it is opponent's turn, target is a chosen selection of cards from their hand to reveal
-                if (
-                    state.current_player_index
-                    == 1 - state.main_player_index
-                ):
+                if state.current_player_index == 1 - state.main_player_index:
                     state.selection = list(target)
                     state.current_player_index = state.main_player_index
                 else:  # If it is main player's turn, target is a card to discard from opponent's hand
