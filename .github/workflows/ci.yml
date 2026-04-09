@@ -65,10 +65,8 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./backend
-        # uv sync is faster and more reliable than pip install .
         run: uv sync
 
       - name: Run pytest
         working-directory: ./backend
-        # Runs pytest within the uv-managed virtual environment
-        run: uv run pytest
+        run: PYTHONPATH=. uv run pytest
