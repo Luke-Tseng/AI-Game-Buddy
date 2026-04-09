@@ -19,6 +19,7 @@ class ChessState(GameState):
     )
     game_result: str | None = None
     move_history: list[str] = Field(default_factory=list)
+    winner: str | None = None
 
     @model_validator(mode="after")
     def validate_chess_state(self) -> "ChessState":

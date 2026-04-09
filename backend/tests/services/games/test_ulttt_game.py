@@ -92,9 +92,7 @@ class TestMakeAction:
     def test_win_small_board_updates_meta_board(
         self, ulttt_system: UltimateTicTacToeSystem, player_ids: list[str]
     ):
-        state = UltimateTicTacToeState(
-            player_ids=player_ids, meta={"curr_player_index": 0}
-        )
+        state = UltimateTicTacToeState(player_ids=player_ids, current_player_index=0)
         # Setup a state where X can win a small board
         state.large_board[0][0][0][0] = "X"
         state.large_board[1][1][0][0] = "O"

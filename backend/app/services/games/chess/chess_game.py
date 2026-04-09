@@ -24,6 +24,7 @@ class ChessSystem(GameSystem[ChessState, ChessAction]):
             player_ids=selected_players,
             turn=1,
             current_player_index=0,
+            winner=None,
         )
 
     def _create_board_from_state(self, state: ChessState) -> chess.Board:
@@ -40,8 +41,8 @@ class ChessSystem(GameSystem[ChessState, ChessAction]):
 
         if action.type == "RESIGN":
             current_player_index = state.current_player_index
-            winner = "white" if board.turn == chess.BLACK else "black"
-            game_result = f"{winner}_wins"
+            winner_color = "white" if board.turn == chess.BLACK else "black"
+            game_result = f"{winner_color}_wins"
             new_state = state.model_copy(
                 update={
                     "game_result": game_result,
@@ -49,6 +50,7 @@ class ChessSystem(GameSystem[ChessState, ChessAction]):
                 },
                 deep=True,
             )
+            new_state.winner = new_state.player_ids[1 - new_state.current_player_index]
             return new_state
 
         move = chess.Move.from_uci(action.payload.move)
@@ -60,9 +62,11 @@ class ChessSystem(GameSystem[ChessState, ChessAction]):
         next_player_index = 1 - current_player_index
 
         game_result = None
+        winner = None
         if board.is_checkmate():
-            winner = "white" if board.turn == chess.BLACK else "black"
-            game_result = f"{winner}_wins"
+            winner_color = "white" if board.turn == chess.BLACK else "black"
+            game_result = f"{winner_color}_wins"
+            winner = player_id
         elif (
             board.is_stalemate()
             or board.is_insufficient_material()
@@ -70,6 +74,7 @@ class ChessSystem(GameSystem[ChessState, ChessAction]):
             or board.is_fivefold_repetition()
         ):
             game_result = "draw"
+            winner = "Draw"
 
         new_state = ChessState(
             finished=game_result is not None,
@@ -80,6 +85,7 @@ class ChessSystem(GameSystem[ChessState, ChessAction]):
             board_fen=board.fen(),
             game_result=game_result,
             move_history=new_move_history,
+            winner=winner,
         )
 
         return new_state

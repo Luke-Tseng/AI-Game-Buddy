@@ -44,7 +44,7 @@ class LandsState(GameState):
             ],
         )
     )
-    winner: int | None
+    winner: str | None
     main_player_index: int
     countered: int
 

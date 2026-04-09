@@ -41,9 +41,7 @@ class UltimateTicTacToeSystem(
 
         new_state = state.model_copy(deep=True)
         if action.type == "RESIGN":
-            new_state.winner = new_state.player_ids[
-                1 - new_state.current_player_index
-            ]
+            new_state.winner = new_state.player_ids[1 - new_state.current_player_index]
             new_state.finished = True
             return new_state
 
@@ -88,10 +86,7 @@ class UltimateTicTacToeSystem(
     def get_valid_actions(
         self, state: UltimateTicTacToeState, player_id: str
     ) -> list[UltimateTicTacToeAction]:
-        if (
-            state.finished
-            or state.player_ids[state.current_player_index] != player_id
-        ):
+        if state.finished or state.player_ids[state.current_player_index] != player_id:
             return []
 
         actions = [UltimateTicTacToeAction(type="RESIGN", payload=None)]

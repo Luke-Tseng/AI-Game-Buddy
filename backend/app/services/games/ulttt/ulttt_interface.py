@@ -24,8 +24,7 @@ class UltimateTicTacToeState(GameState):
     # Determines which small board the next player must play in.
     # None indicates the player can choose any board.
     active_board: tuple[int, int] | None = None
-    winner: int = None
-
+    winner: str | None = None
 
     @model_validator(mode="after")
     def check_legal_state(self) -> "UltimateTicTacToeState":
@@ -65,16 +64,11 @@ class UltimateTicTacToeState(GameState):
             )
 
             player_index = self.current_player_index
-            if player_index == 0:  # X's turn
-                if x_count != o_count:
-                    raise ValueError(
-                        f"Invalid turn order. X count: {x_count}, O count: {o_count}."
-                    )
-            elif player_index == 1:  # O's turn
-                if x_count != o_count + 1:
-                    raise ValueError(
-                        f"Invalid turn order. X count: {x_count}, O count: {o_count}."
-                    )
+
+            if player_index == 0 and x_count != o_count:  # X's turn
+                raise ValueError("Invalid turn order")
+            elif player_index == 1 and x_count != o_count + 1:  # O's turn
+                raise ValueError("Invalid turn order")
 
         # 4. Check finished flag consistency
         game_status = self._check_board_status(self.meta_board)

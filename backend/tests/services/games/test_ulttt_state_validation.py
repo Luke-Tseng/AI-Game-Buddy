@@ -13,7 +13,7 @@ def player_ids() -> list[str]:
 @pytest.fixture
 def valid_state(player_ids: list[str]) -> UltimateTicTacToeState:
     """Provides a basic, valid game state."""
-    return UltimateTicTacToeState(player_ids=player_ids, meta={"curr_player_index": 0})
+    return UltimateTicTacToeState(player_ids=player_ids, current_player_index=0)
 
 
 class TestUltimateTicTacToeStateValidation:
