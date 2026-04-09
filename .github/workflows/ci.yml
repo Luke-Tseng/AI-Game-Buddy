@@ -69,4 +69,4 @@ jobs:
 
       - name: Run pytest
         working-directory: ./backend
-        run: PYTHONPATH=.. uv run pytest
+        run: PYTHONPATH=.. uv run --all-groups pytest
