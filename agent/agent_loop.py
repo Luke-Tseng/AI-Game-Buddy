@@ -49,7 +49,7 @@ class AgentLoop:
     async def step(self):
         """A single iteration of the agentic loop."""
 
-        # 1. OBSERVE
+        # OBSERVE
         env_state = await self._observe_environment()
 
         # For efficiency, if state is empty/no updates, you could return early here.
@@ -63,13 +63,13 @@ class AgentLoop:
             "If there are chat messages, respond to them. You can do both."
         )
 
-        # 2. DECIDE & 3. ACT (Gemini handles the tool calling loop internally when enabled)
+        # DECIDE & ACT (Gemini handles the tool calling loop internally when enabled)
         try:
             # send_message_async will automatically call the MCP tools mapped to Gemini
             # if the LLM decides to use them, because we registered them in the model!
             response = await self.chat.send_message_async(observation_msg)
 
-            # 4. MEMORY
+            # MEMORY
             # Gemini's chat object automatically keeps track of the history,
             # but we can sync it back to your Pydantic model for database storage.
             self.session.history.append({"role": "user", "content": observation_msg})

@@ -15,7 +15,7 @@ def lobby_tools(mcp, room_service: RoomService):
     """
 
     @mcp.tool()
-    async def get_room_manifest(room_id: str) -> dict:
+    async def get_room_manifest(room_id: str, agent_id: str) -> dict:
         """
         Retrieves the room's current activity and the agent's role within it.
 
@@ -36,10 +36,19 @@ def lobby_tools(mcp, room_service: RoomService):
         if not room:
             return {"error": "Room not found."}
 
+        is_agent_turn = False
+
+        # Use game_state to check agent turn
+        if room.game_state and room.game_state != {}:
+            current_player_index = room.game_state.current_player_index
+            if current_player_index is not None:
+                current_player = room.game_state.player_ids[current_player_index]
+                is_agent_turn = agent_id == current_player
+
         manifest = {
             "game_type": room.game_type,
             "users": room.users,
-            "is_agent_turn": False,
+            "is_agent_turn": is_agent_turn,
             "game_status": "waiting" if not room.game_state else "active",
         }
 
