@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated, Any
 
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
+from argon2.exceptions import InvalidHashError, VerifyMismatchError
 from fastapi import Cookie, HTTPException, Response, WebSocket, status
 from jose import JWTError, jwt
 from pydantic import SecretStr
@@ -38,7 +38,7 @@ def verify_password(password: SecretStr, hashed_password: str) -> bool:
     """
     try:
         return ph.verify(hashed_password, password.get_secret_value())
-    except VerifyMismatchError:
+    except (VerifyMismatchError, InvalidHashError):
         return False
     except Exception as e:
         logger.error(f"Unexpected error during password verification: {e}")

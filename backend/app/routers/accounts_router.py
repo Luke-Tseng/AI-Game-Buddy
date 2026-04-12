@@ -48,8 +48,6 @@ async def login_account(
 
     auth._set_auth_cookies(response=response, user_id=user["id"])
 
-    user.pop("password", None)
-
     return user
 
 

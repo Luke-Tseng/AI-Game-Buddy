@@ -15,6 +15,9 @@ class Phase(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def set_current_if_missing(cls, values: dict) -> dict:
+        if values is None:
+            return {}
+
         if "current" not in values or not values["current"]:
             if "available_phases" in values and values["available_phases"]:
                 # Set 'current' to the first available phase

@@ -185,6 +185,8 @@ async def get_game(
 ):
     try:
         game_state = await room_service.get_game_state(room_id=room_id)
+        if game_state is None:
+            raise HTTPException(status_code=404, detail="Game not found")
         return game_state
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e

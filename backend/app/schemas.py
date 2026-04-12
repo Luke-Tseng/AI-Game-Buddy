@@ -23,7 +23,7 @@ class User(BaseModel):
 
 
 class UserResponse(BaseModel):
-    user_id: str
+    user_id: str = Field(alias="id")
     username: str
     email: EmailStr
     room: str | None = (
