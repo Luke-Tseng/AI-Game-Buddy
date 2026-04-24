@@ -4,7 +4,6 @@ import logging
 import google.generativeai as genai
 from google.generativeai.types import Part
 
-# Import schemas
 from schemas import AgentProfile, AgentSession
 
 logger = logging.getLogger(__name__)
@@ -61,7 +60,8 @@ class MicroserviceAgentLoop:
     async def step(self):
         try:
             manifest_response = await self.mcp_session.call_tool(
-                "get_room_manifest", {"room_id": self.session.room_id}
+                "get_room_manifest",
+                {"room_id": self.session.room_id, "agent_id": self.session.id},
             )
             manifest = json.loads(manifest_response.content[0].text)
         except Exception as e:

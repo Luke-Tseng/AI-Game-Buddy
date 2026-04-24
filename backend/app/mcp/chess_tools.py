@@ -117,7 +117,7 @@ def chess_tools(
 
     # TODO: Add parameter for agent id
     @mcp.tool()
-    async def play_chess_move(room_id: str, move_uci: str) -> dict:
+    async def play_chess_move(room_id: str, agent_id: str, move_uci: str) -> dict:
         """
         Executes a legal chess move in the specified room and updates the persistent database.
 
@@ -157,6 +157,10 @@ def chess_tools(
         state = ChessState.model_validate(room.game_state)
         current_player_index = state.current_player_index
         current_player_id = state.player_ids[current_player_index]
+
+        # Check if it's agent's turn
+        if current_player_id != agent_id:
+            return {"error": "It is not your turn. Do not make a move."}
 
         action = ChessAction(type="MAKE_MOVE", payload=ChessMovePayload(move=move_uci))
 
