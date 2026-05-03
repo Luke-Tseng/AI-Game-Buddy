@@ -13,6 +13,7 @@ jobs:
     # Needs to have CI Checks succeed and be on main branch
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    name: Build Backend
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -46,6 +47,31 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  # Deploy built image from ACR to Azure Container App
+  deploy-backend:
+    needs: build-backend
+    runs-on: ubuntu-latest
+    name: Deploy Backend
+    steps:
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get short SHA
+        id: sha
+        run: echo "short=$(echo ${{ github.event.workflow_run.head_sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Deploy to Azure Container App
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          resourceGroup: "ai-game-friend"
+          containerAppName: "ai-game-friend-container"
+          imageToDeploy: "${{ secrets.ACR_NAME }}.azurecr.io/luke-tseng/ai-game-buddy:sha-${{ steps.sha.outputs.short }}"
+          registryUrl: ${{ secrets.ACR_NAME }}.azurecr.io
+          registryUsername: ${{ secrets.ACR_USERNAME }}
+          registryPassword: ${{ secrets.ACR_PASSWORD }}
 
   # Build and deploy frontend to Azure Static Web Apps
   build-and-deploy-frontend:
@@ -108,26 +134,3 @@ jobs:
           output_location: ""
           skip_app_build: true
 
-  # Deploy built image from ACR to Azure Container App
-  deploy-backend:
-    needs: build-backend
-    runs-on: ubuntu-latest
-    steps:
-      - name: Log in to Azure
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Get short SHA
-        id: sha
-        run: echo "short=$(echo ${{ github.event.workflow_run.head_sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
-
-      - name: Deploy to Azure Container App
-        uses: azure/container-apps-deploy-action@v2
-        with:
-          resourceGroup: "ai-game-friend"
-          containerAppName: "ai-game-friend-container"
-          imageToDeploy: "${{ secrets.ACR_NAME }}.azurecr.io/luke-tseng/ai-game-buddy:sha-${{ steps.sha.outputs.short }}"
-          registryUrl: ${{ secrets.ACR_NAME }}.azurecr.io
-          registryUsername: ${{ secrets.ACR_USERNAME }}
-          registryPassword: ${{ secrets.ACR_PASSWORD }}
