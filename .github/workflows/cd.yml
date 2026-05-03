@@ -41,7 +41,7 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./backend
           file: ./backend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -105,7 +105,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "/frontend"
-          output_location: "out"
+          output_location: ""
           skip_app_build: true
 
   # Deploy built image from ACR to Azure Container App
