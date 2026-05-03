@@ -2,8 +2,8 @@ name: Build and Deploy to Azure
 on:
   workflow_run:
     # Wait for CI Checks to complete before running
-    workflows: ["CI Checks"]
-    branches: [main]
+    workflows: [ "CI Checks" ]
+    branches: [ main ]
     types:
       - completed
 
@@ -13,6 +13,7 @@ jobs:
     # Needs to have CI Checks succeed and be on main branch
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    name: Build Backend
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -32,7 +33,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.ACR_NAME }}.azurecr.io/${{ github.repository }}
+          images: ${{ secrets.ACR_NAME }}.azurecr.io/luke-tseng/ai-game-buddy
           tags: |
             type=sha,prefix=sha-,format=short
             type=raw,value=latest,enable={{is_default_branch}}
@@ -41,11 +42,36 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./backend
           file: ./backend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  # Deploy built image from ACR to Azure Container App
+  deploy-backend:
+    needs: build-backend
+    runs-on: ubuntu-latest
+    name: Deploy Backend
+    steps:
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get short SHA
+        id: sha
+        run: echo "short=$(echo ${{ github.event.workflow_run.head_sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Deploy to Azure Container App
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          resourceGroup: "ai-game-friend"
+          containerAppName: "ai-game-friend-container"
+          imageToDeploy: "${{ secrets.ACR_NAME }}.azurecr.io/luke-tseng/ai-game-buddy:sha-${{ steps.sha.outputs.short }}"
+          registryUrl: ${{ secrets.ACR_NAME }}.azurecr.io
+          registryUsername: ${{ secrets.ACR_USERNAME }}
+          registryPassword: ${{ secrets.ACR_PASSWORD }}
 
   # Build and deploy frontend to Azure Static Web Apps
   build-and-deploy-frontend:
@@ -80,46 +106,31 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: frontend/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('frontend/package-lock.json') }}-${{ hashFiles('frontend/src/**.[jt]s', 'frontend/src/**.[jt]sx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('frontend/package-lock.json') }}-
+
       # Build frontend with env vars baked in
       - name: Build frontend
         working-directory: frontend
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: https://myaigamingfriendcontainerjj.bravebay-621a33e9.westus3.azurecontainerapps.io
-          NEXT_PUBLIC_WEBSOCKET_URL: wss://myaigamingfriendcontainerjj.bravebay-621a33e9.westus3.azurecontainerapps.io/ws
+          NEXT_PUBLIC_API_URL: https://ai-game-friend-container.bravebush-98705622.westus3.azurecontainerapps.io
+          NEXT_PUBLIC_WEBSOCKET_URL: wss://ai-game-friend-container.bravebush-98705622.westus3.azurecontainerapps.io/ws
           NODE_ENV: production
 
       # Deploy prebuilt app to Azure Static Web Apps
       - name: Deploy to Azure SWA
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_THANKFUL_BAY_09EC9CF1E }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_SWA_DEPLOY_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "/frontend"
-          output_location: ".next"
+          output_location: ""
           skip_app_build: true
 
-  # Deploy built image from ACR to Azure Container App
-  deploy-backend:
-    needs: build-backend
-    runs-on: ubuntu-latest
-    steps:
-      - name: Log in to Azure
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Get short SHA
-        id: sha
-        run: echo "short=$(echo ${{ github.event.workflow_run.head_sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
-
-      - name: Deploy to Azure Container App
-        uses: azure/container-apps-deploy-action@v2
-        with:
-          resourceGroup: "my-ai-gaming-friend"
-          containerAppName: "myaigamingfriendcontainerjj"
-          imageToDeploy: "${{ secrets.ACR_NAME }}.azurecr.io/peter5000/ai-game-buddy:sha-${{ steps.sha.outputs.short }}"
-          registryUrl: ${{ secrets.ACR_NAME }}.azurecr.io
-          registryUsername: ${{ secrets.ACR_USERNAME }}
-          registryPassword: ${{ secrets.ACR_PASSWORD }}
