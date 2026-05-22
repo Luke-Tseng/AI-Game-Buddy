@@ -259,9 +259,11 @@ class ConnectionEndpoint(WebSocketEndpoint):
 
         if chat_id and sender and message:
             # Verify chat exists and user is in chat
-            await self.chat_service.check_user_in_chat(
+            if not await self.chat_service.check_user_in_chat(
                 user_id=self.user_id, chat_id=chat_id
-            )
+            ):
+                logger.warning(f"Unauthorized chat attempt by user {self.user_id}")
+                return
 
             # Send chat message to chat service
             chat_message = await self.chat_service.add_message_to_chat(

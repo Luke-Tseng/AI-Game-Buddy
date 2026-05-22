@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 def lobby_tools(mcp, room_service: RoomService):
     """
     Registers lobby tools that allows agents to join
+    Note: Don't need join/leave mcp tools, will do that for room and chat directly in the backend.
 
     Args:
         mcp (_type_): _description_
