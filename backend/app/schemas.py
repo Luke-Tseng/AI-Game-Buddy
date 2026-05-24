@@ -99,7 +99,7 @@ class Chat(BaseModel):
     id: str  # chat id
     room_id: str | None = None
     users: set[str] = Field(default_factory=set)
-    bots: set[str] = Field(default_factory=set)
+    agents: set[str] = Field(default_factory=set)
     chat_log: list[ChatMessage] = Field(default_factory=list)
 
 
