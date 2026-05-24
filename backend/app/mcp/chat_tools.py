@@ -16,7 +16,7 @@ def chat_tools(mcp, chat_service: ChatService, connection_service: ConnectionSer
             ):
                 return {"error": f"Agent {agent_id} is not authorized in this chat."}
 
-            chat_message = await chat_service.add_message_to_chat(
+            chat_message = await chat_service.add_message(
                 chat_id=chat_id, user_id=agent_id, message=message
             )
 

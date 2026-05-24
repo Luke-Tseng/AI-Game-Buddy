@@ -266,7 +266,7 @@ class ConnectionEndpoint(WebSocketEndpoint):
                 return
 
             # Send chat message to chat service
-            chat_message = await self.chat_service.add_message_to_chat(
+            chat_message = await self.chat_service.add_message(
                 chat_id=chat_id, user_id=self.user_id, message=message
             )
 

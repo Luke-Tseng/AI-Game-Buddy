@@ -184,10 +184,10 @@ class TestGetChatLog:
         mock_cosmos_service.get_item.assert_awaited_once()
 
 
-## Tests for add_message_to_chat
+## Tests for add_message
 class TestAddMessageToChat:
     @pytest.mark.asyncio
-    async def test_add_message_to_chat_success(self, chat_service, mock_redis_service):
+    async def test_add_message_success(self, chat_service, mock_redis_service):
         # ARRANGE
         from app.schemas import Chat
 
@@ -202,7 +202,7 @@ class TestAddMessageToChat:
         message = "Hello, world!"
 
         # ACT
-        chat_message = await chat_service.add_message_to_chat(
+        chat_message = await chat_service.add_message(
             TEST_CHAT_ID, TEST_USER_ID, message
         )
 
@@ -212,7 +212,7 @@ class TestAddMessageToChat:
         mock_redis_service.set_value.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_add_message_to_chat_fails_if_user_not_in_chat(self, chat_service):
+    async def test_add_message_fails_if_user_not_in_chat(self, chat_service):
         # ARRANGE
         from app.schemas import Chat
 
@@ -228,7 +228,7 @@ class TestAddMessageToChat:
 
         # ACT & ASSERT
         with pytest.raises(HTTPException) as exc_info:
-            await chat_service.add_message_to_chat(TEST_CHAT_ID, TEST_USER_ID, message)
+            await chat_service.add_message(TEST_CHAT_ID, TEST_USER_ID, message)
 
         assert exc_info.value.status_code == 403
 

@@ -94,7 +94,6 @@ class ChatService:
 
         return chat
 
-    # Currently not supporting bots
     async def join_chat(self, chat_id: str, user_id: str):
         if not chat_id:
             raise ValueError("Chat ID missing on join chat room")
@@ -489,7 +488,7 @@ class ChatService:
         logger.warning(f"User not found in both redis and cosmos for chat '{chat_id}'")
         return False
 
-    async def add_message_to_chat(
+    async def add_message(
         self, chat_id: str, user_id: str, message: str
     ) -> ChatMessage:
         if not chat_id:
@@ -539,3 +538,17 @@ class ChatService:
         return chat_message
 
 # TODO: Add function for adding agents to chat
+    async def add_agent(self, chat_id: str, profile_id: str):
+        """Generates a uuid for agent, creates agent session and adds to chat in database.
+
+        Args:
+            chat_id (str): _description_
+            profile_id (str): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        return 0
+
+    async def remove_agent(self, chat_id: str, agent_id: str):
+        return 0
