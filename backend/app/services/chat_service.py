@@ -47,7 +47,7 @@ class ChatService:
         )
 
         cosmos_chat = chat.model_dump(mode="json")
-        redis_chat = chat.model_dump(exclude={"users", "chat_log", "bots"}, mode="json")
+        redis_chat = chat.model_dump(exclude={"users", "chat_log", "agents"}, mode="json")
 
         try:
             # Write new chat into redis
@@ -62,9 +62,9 @@ class ChatService:
             await self._redis_service.expire(f"chat:{chat_id}:users", 86400)
 
             await self._redis_service.set_add(
-                key=f"chat:{chat_id}:bots", values=chat.bots
+                key=f"chat:{chat_id}:agents", values=chat.agents
             )
-            await self._redis_service.expire(f"chat:{chat_id}:bots", 86400)
+            await self._redis_service.expire(f"chat:{chat_id}:agents", 86400)
 
             await self._redis_service.set_value(
                 key=f"chat:{chat_id}:log", value=chat.chat_log
@@ -224,9 +224,9 @@ class ChatService:
             user_set = await self._redis_service.set_get(key=f"chat:{chat_id}:users")
             if user_set:
                 await self._redis_service.expire(f"chat:{chat_id}:users", 86400)
-            bot_set = await self._redis_service.set_get(key=f"chat:{chat_id}:bots")
+            bot_set = await self._redis_service.set_get(key=f"chat:{chat_id}:agents")
             if bot_set is not None:
-                await self._redis_service.expire(f"chat:{chat_id}:bots", 86400)
+                await self._redis_service.expire(f"chat:{chat_id}:agents", 86400)
             chat_log = await self._redis_service.get_value(key=f"chat:{chat_id}:log")
             if chat_log is not None:
                 await self._redis_service.expire(f"chat:{chat_id}:log", 86400)
@@ -234,7 +234,7 @@ class ChatService:
                 # Combine the data into a single dictionary
                 full_chat_data = chat_data | {
                     "users": user_set,
-                    "bots": bot_set,
+                    "agents": bot_set,
                     "chat_log": json.loads(chat_log),
                 }
                 return Chat.model_validate(full_chat_data)
@@ -258,7 +258,7 @@ class ChatService:
 
                 # Separate the data for storage
                 chat_data = chat_object.model_dump(
-                    exclude={"users", "bots", "chat_log"}, mode="json"
+                    exclude={"users", "agents", "chat_log"}, mode="json"
                 )
                 try:
                     # Write to the separate Redis keys
@@ -269,7 +269,7 @@ class ChatService:
                         key=f"chat:{chat_id}:users", values=chat_object.users
                     )
                     await self._redis_service.set_add(
-                        key=f"chat:{chat_id}:bots", values=chat_object.bots
+                        key=f"chat:{chat_id}:agents", values=chat_object.agents
                     )
                     await self._redis_service.set_value(
                         key=f"chat:{chat_id}:log",
@@ -277,7 +277,7 @@ class ChatService:
                     )
                     await self._redis_service.expire(f"chat:{chat_id}", 86400)
                     await self._redis_service.expire(f"chat:{chat_id}:users", 86400)
-                    await self._redis_service.expire(f"chat:{chat_id}:bots", 86400)
+                    await self._redis_service.expire(f"chat:{chat_id}:agents", 86400)
                     await self._redis_service.expire(f"chat:{chat_id}:log", 86400)
                 except HTTPException as e:
                     logger.warning(f"Redis unavailable for writing new chat: {e}")

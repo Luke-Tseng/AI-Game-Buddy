@@ -113,7 +113,7 @@ class TestGetChat:
             "id": TEST_CHAT_ID,
             "room_id": TEST_ROOM_ID,
             "users": ["user1"],
-            "bots": [],
+            "agents": [],
             "chat_log": [],
         }
         mock_cosmos_service.get_item.return_value = db_data
