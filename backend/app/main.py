@@ -28,6 +28,15 @@ from app.routers import (
 if settings.APPLICATIONINSIGHTS_CONNECTION_STRING:
     configure_azure_monitor()
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+# Initialize MCP service before using it in lifespan
+mcp_service = get_mcp_service()
+mcp_app = mcp_service.get_app()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -86,15 +95,8 @@ app.add_middleware(
     expose_headers=["mcp-session-id"],
 )
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-
 FastAPIInstrumentor.instrument_app(app)
 
-mcp_service = get_mcp_service()
-mcp_app = mcp_service.get_app()
 app.mount("/mcp", mcp_app)
 
 app.include_router(accounts_router.router)
