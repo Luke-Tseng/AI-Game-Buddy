@@ -1,8 +1,8 @@
+import asyncio
 import json
 import logging
 
 import google.generativeai as genai
-from google.generativeai.types import Part
 
 from schemas import AgentProfile, AgentSession
 
@@ -18,6 +18,7 @@ class MicroserviceAgentLoop:
         self.current_game_type = None
         self.model = None
         self.chat = None
+        self._max_tool_calls = 10
 
     async def _get_active_tools_for_game(self, game_type: str | None) -> list:
         mcp_tools = await self.mcp_session.list_tools()
@@ -63,9 +64,17 @@ class MicroserviceAgentLoop:
                 "get_room_manifest",
                 {"room_id": self.session.room_id, "agent_id": self.session.id},
             )
+            if not manifest_response.content or not manifest_response.content[0].text:
+                logger.warning("Empty manifest response received.")
+                return
             manifest = json.loads(manifest_response.content[0].text)
         except Exception as e:
             logger.error(f"Failed to get room manifest: {e}")
+            return
+
+        # Manifest may return an error dict (e.g. room not found)
+        if "error" in manifest:
+            logger.warning(f"Manifest error: {manifest.get('error')}")
             return
 
         active_game_type = manifest.get("game_type")
@@ -78,12 +87,18 @@ class MicroserviceAgentLoop:
             observation_msg = "It is your turn. Check the board state and use your game tools to make a move."
             try:
                 response = await self.chat.send_message_async(observation_msg)
-                await self.handle_tool_calls(response)
+                await self.handle_tool_calls(response, depth=0)
             except Exception as e:
                 logger.error(f"Error during agent action step: {e}")
 
-    async def handle_tool_calls(self, response) -> bool:
+    async def handle_tool_calls(self, response, depth: int = 0) -> bool:
         if not response.function_calls:
+            return False
+
+        if depth >= self._max_tool_calls:
+            logger.warning(
+                f"Max tool call depth ({self._max_tool_calls}) reached; stopping tool chain."
+            )
             return False
 
         for call in response.function_calls:
@@ -97,17 +112,21 @@ class MicroserviceAgentLoop:
                 )
 
                 next_response = await self.chat.send_message_async(
-                    Part.from_function_response(
-                        name=call.name, response={"result": result_text}
+                    genai.protos.Part(
+                        function_response=genai.protos.FunctionResponse(
+                            name=call.name, response={"result": result_text}
+                        )
                     )
                 )
-                await self.handle_tool_calls(next_response)
+                await self.handle_tool_calls(next_response, depth=depth + 1)
 
             except Exception as e:
                 logger.error(f"Error executing tool {call.name}: {e}")
                 await self.chat.send_message_async(
-                    Part.from_function_response(
-                        name=call.name, response={"error": str(e)}
+                    genai.protos.Part(
+                        function_response=genai.protos.FunctionResponse(
+                            name=call.name, response={"error": str(e)}
+                        )
                     )
                 )
         return True
@@ -120,8 +139,6 @@ class MicroserviceAgentLoop:
         try:
             while True:
                 await self.step()
-                import asyncio
-
                 await asyncio.sleep(poll_interval)
         except asyncio.CancelledError:
             logger.info(f"Agent {self.profile.name} shutting down gracefully.")

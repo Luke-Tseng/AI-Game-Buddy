@@ -483,7 +483,8 @@ class ChatService:
 
         if chat_data is not None:
             user_list = chat_data.get("users")
-            return user_id in user_list
+            agent_list = chat_data.get("agents")
+            return user_id in user_list or user_id in (agent_list or [])
 
         logger.warning(f"User not found in both redis and cosmos for chat '{chat_id}'")
         return False
@@ -505,7 +506,7 @@ class ChatService:
             raise HTTPException(status_code=404, detail="Chat not found")
 
         # Verify user is in chat
-        if user_id not in chat.users:
+        if user_id not in chat.users and user_id not in chat.agents:
             raise HTTPException(status_code=403, detail="User not in chat")
 
         chat.chat_log.append(chat_message)
@@ -537,18 +538,103 @@ class ChatService:
 
         return chat_message
 
-# TODO: Add function for adding agents to chat
-    async def add_agent(self, chat_id: str, profile_id: str):
-        """Generates a uuid for agent, creates agent session and adds to chat in database.
+    async def add_agent(self, chat_id: str, agent_id: str):
+        """Adds an agent to a chat so it can send and receive messages.
 
         Args:
-            chat_id (str): _description_
-            profile_id (str): _description_
+            chat_id (str): The chat ID to add the agent to.
+            agent_id (str): The agent's unique identifier.
 
-        Returns:
-            _type_: _description_
+        Raises:
+            ValueError: If the chat ID or agent ID is missing, or chat not found.
         """
-        return 0
+        if not chat_id:
+            raise ValueError("Chat ID missing on adding agent")
+        if not agent_id:
+            raise ValueError("Agent ID missing on adding agent")
+
+        chat = await self.get_chat(chat_id=chat_id)
+        if chat is None:
+            raise HTTPException(status_code=404, detail="Chat not found")
+
+        chat.agents.add(agent_id)
+        try:
+            await self._redis_service.set_add(
+                key=f"chat:{chat_id}:agents", values=[agent_id]
+            )
+            await self._redis_service.expire(f"chat:{chat_id}:agents", 86400)
+        except HTTPException as e:
+            logger.warning(f"Redis unavailable for adding agent to chat: {e}")
+
+        patch_operation = [{"op": "add", "path": "/agents/-", "value": agent_id}]
+
+        await self._cosmos_service.patch_item(
+            item_id=chat_id,
+            partition_key=chat_id,
+            patch_operations=patch_operation,
+            container_type="chats",
+        )
+
+        return chat
 
     async def remove_agent(self, chat_id: str, agent_id: str):
-        return 0
+        """Removes an agent from a chat.
+
+        Args:
+            chat_id (str): The chat ID to remove the agent from.
+            agent_id (str): The agent's unique identifier.
+
+        Raises:
+            ValueError: If the chat ID or agent ID is missing.
+            HTTPException: If the chat is not found or agent not in chat.
+        """
+        if not chat_id:
+            raise ValueError("Chat ID missing on removing agent")
+        if not agent_id:
+            raise ValueError("Agent ID missing on removing agent")
+
+        chat = await self.get_chat(chat_id=chat_id)
+        if chat is None:
+            raise HTTPException(status_code=404, detail="Chat not found")
+
+        if agent_id not in chat.agents:
+            logger.warning(f"Agent '{agent_id}' not in chat '{chat_id}'")
+            raise HTTPException(
+                status_code=404, detail=f"Agent '{agent_id}' not in chat"
+            )
+
+        try:
+            await self._redis_service.set_remove(
+                key=f"chat:{chat_id}:agents", values=[agent_id]
+            )
+            await self._redis_service.expire(f"chat:{chat_id}:agents", 86400)
+        except HTTPException as e:
+            logger.warning(f"Redis unavailable for removing agent from chat: {e}")
+
+        try:
+            item = await self._cosmos_service.get_item(
+                item=chat_id, partition_key=chat_id, container_type="chats"
+            )
+            agent_list = item.get("agents", [])
+
+            if agent_id in agent_list:
+                index_to_remove = agent_list.index(agent_id)
+
+                patch_operation = [
+                    {"op": "remove", "path": f"/agents/{index_to_remove}"}
+                ]
+
+                await self._cosmos_service.patch_item(
+                    item_id=chat_id,
+                    partition_key=chat_id,
+                    patch_operations=patch_operation,
+                    container_type="chats",
+                )
+            else:
+                logger.warning(f"Agent '{agent_id}' not found in chat agents")
+        except ValueError:
+            logger.warning(f"Agent '{agent_id}' not found in the list, no changes made.")
+        except Exception as e:
+            logger.error(f"An error occurred: {e}")
+
+        return chat

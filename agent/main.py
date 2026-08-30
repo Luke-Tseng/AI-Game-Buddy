@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException, status
 from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 
-from agent_loop import AgentLoop
+from agent_loop import MicroserviceAgentLoop
 from schemas import ConnectAgentRequest
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ async def connect_agent(req: ConnectAgentRequest):
                     mcp_sessions[session_key] = mcp_session
 
                     # Initialize agent loop
-                    agent_loop = AgentLoop(
+                    agent_loop = MicroserviceAgentLoop(
                         profile=req.profile,
                         session=req.session,
                         mcp_session=mcp_session,

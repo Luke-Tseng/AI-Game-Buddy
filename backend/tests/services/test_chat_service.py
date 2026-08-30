@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
@@ -453,3 +453,89 @@ class TestJoinChat:
             await chat_service.join_chat(TEST_CHAT_ID, TEST_USER_ID)
 
         assert exc_info.value.status_code == 409
+
+
+## Tests for add_agent & remove_agent
+class TestAddRemoveAgent:
+    TEST_AGENT_ID = "agent-xyz"
+
+    @pytest.mark.asyncio
+    async def test_add_agent_success(
+        self, chat_service, mock_redis_service, mock_cosmos_service
+    ):
+        # ARRANGE
+        mock_chat = MagicMock()
+        mock_chat.agents = set()
+        mock_chat.users = {TEST_USER_ID}
+        chat_service.get_chat = AsyncMock(return_value=mock_chat)
+
+        # ACT
+        result = await chat_service.add_agent(TEST_CHAT_ID, self.TEST_AGENT_ID)
+
+        # ASSERT: Agent added to chat's agents set
+        assert self.TEST_AGENT_ID in mock_chat.agents
+
+        # ASSERT: Redis agents set updated
+        mock_redis_service.set_add.assert_awaited_once_with(
+            key=f"chat:{TEST_CHAT_ID}:agents", values=[self.TEST_AGENT_ID]
+        )
+
+        # ASSERT: Cosmos patch adds agent to agents
+        mock_cosmos_service.patch_item.assert_awaited_once()
+        _, kwargs = mock_cosmos_service.patch_item.await_args
+        assert kwargs["item_id"] == TEST_CHAT_ID
+        assert kwargs["container_type"] == "chats"
+
+        assert result is mock_chat
+
+    @pytest.mark.asyncio
+    async def test_add_agent_chat_not_found(self, chat_service):
+        # ARRANGE
+        chat_service.get_chat = AsyncMock(return_value=None)
+
+        # ACT & ASSERT
+        with pytest.raises(HTTPException) as exc_info:
+            await chat_service.add_agent(TEST_CHAT_ID, self.TEST_AGENT_ID)
+
+        assert exc_info.value.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_remove_agent_success(
+        self, chat_service, mock_redis_service, mock_cosmos_service
+    ):
+        # ARRANGE
+        mock_chat = MagicMock()
+        mock_chat.agents = {self.TEST_AGENT_ID}
+        mock_chat.users = {TEST_USER_ID}
+        chat_service.get_chat = AsyncMock(return_value=mock_chat)
+        mock_cosmos_service.get_item.return_value = {
+            "id": TEST_CHAT_ID,
+            "users": [TEST_USER_ID],
+            "agents": [self.TEST_AGENT_ID],
+        }
+
+        # ACT
+        await chat_service.remove_agent(TEST_CHAT_ID, self.TEST_AGENT_ID)
+
+        # ASSERT: Redis agents set updated
+        mock_redis_service.set_remove.assert_awaited_once_with(
+            key=f"chat:{TEST_CHAT_ID}:agents", values=[self.TEST_AGENT_ID]
+        )
+
+        # ASSERT: Cosmos patch removes agent from agents
+        _, kwargs = mock_cosmos_service.patch_item.await_args
+        assert kwargs["item_id"] == TEST_CHAT_ID
+        assert kwargs["container_type"] == "chats"
+
+    @pytest.mark.asyncio
+    async def test_remove_agent_not_in_chat(self, chat_service):
+        # ARRANGE
+        mock_chat = MagicMock()
+        mock_chat.agents = set()
+        chat_service.get_chat = AsyncMock(return_value=mock_chat)
+
+        # ACT & ASSERT
+        with pytest.raises(HTTPException) as exc_info:
+            await chat_service.remove_agent(TEST_CHAT_ID, self.TEST_AGENT_ID)
+
+        assert exc_info.value.status_code == 404

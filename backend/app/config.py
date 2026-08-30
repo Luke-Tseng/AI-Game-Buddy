@@ -24,6 +24,14 @@ class Settings:
     REDIS_CONNECTION_URL = os.getenv("REDIS_CONNECTION_URL")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+    # Agent microservice orchestration
+    AGENT_SERVICE_URL = os.getenv("AGENT_SERVICE_URL", "http://localhost:8080")
+    # The public URL of THIS backend's MCP SSE endpoint, which the agent
+    # microservice should connect back to (e.g. https://host/mcp/sse).
+    MCP_SSE_URL = os.getenv(
+        "MCP_SSE_URL", "http://localhost:8000/mcp/sse"
+    )
+
     # const variables
     ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Token valid for 30 minutes
     REFRESH_TOKEN_EXPIRE_DAYS = 14  # Token valid for 14 days

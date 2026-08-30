@@ -630,3 +630,107 @@ class RoomService:
         return False
 
     # TODO: Add and remove agent functions
+    async def add_agent(self, room_id: str, agent_id: str):
+        """Adds an agent to a room so it can participate in the game.
+
+        The agent id is added to the room's users set, mirroring join_room.
+        This is required so that game state's player_ids includes the agent,
+        which enables turn detection for the agent via get_room_manifest.
+
+        Args:
+            room_id (str): The room ID of the room to add the agent to.
+            agent_id (str): The agent's unique identifier.
+
+        Raises:
+            ValueError: If the room ID or agent ID is missing, or room not found.
+        """
+        if not room_id:
+            raise ValueError("Room ID missing on add agent")
+        if not agent_id:
+            raise ValueError("Agent ID missing on add agent")
+
+        room = await self.get_room(room_id=room_id)
+        if not room:
+            raise ValueError("Room not found")
+
+        try:
+            await self._redis_service.set_add(
+                key=f"room:{room_id}:users", values=[agent_id]
+            )
+            await self._redis_service.expire(f"room:{room_id}:users", 86400)
+        except HTTPException as e:
+            logger.warning(f"Redis unavailable for adding agent to room: {e}")
+
+        # Add agent to room users in cosmos
+        patch_operation = [{"op": "add", "path": "/users/-", "value": agent_id}]
+
+        await self._cosmos_service.patch_item(
+            item_id=room_id,
+            partition_key=room_id,
+            patch_operations=patch_operation,
+            container_type="rooms",
+        )
+
+        return await self.get_room(room_id=room_id)
+
+    async def remove_agent(self, room_id: str, agent_id: str):
+        """Removes an agent from a room.
+
+        Args:
+            room_id (str): The room ID of the room to remove the agent from.
+            agent_id (str): The agent's unique identifier.
+
+        Raises:
+            ValueError: If the room ID or agent ID is missing.
+            HTTPException: If the agent is not found in the room.
+        """
+        if not room_id:
+            raise ValueError("Room ID missing on remove agent")
+        if not agent_id:
+            raise ValueError("Agent ID missing on remove agent")
+
+        room = await self.get_room(room_id=room_id)
+        if not room:
+            raise ValueError("Room not found")
+
+        try:
+            await self._redis_service.set_remove(
+                key=f"room:{room_id}:users", values=[agent_id]
+            )
+        except HTTPException as e:
+            logger.warning(f"Redis unavailable for removing agent from room: {e}")
+
+        try:
+            item = await self._cosmos_service.get_item(
+                item=room_id, partition_key=room_id, container_type="rooms"
+            )
+            user_list = item.get("users", [])
+
+            if agent_id in user_list:
+                index_to_remove = user_list.index(agent_id)
+
+                patch_operation = [
+                    {"op": "remove", "path": f"/users/{index_to_remove}"}
+                ]
+
+                await self._cosmos_service.patch_item(
+                    item_id=room_id,
+                    partition_key=room_id,
+                    patch_operations=patch_operation,
+                    container_type="rooms",
+                )
+            else:
+                logger.warning(
+                    f"Agent '{agent_id}' not found in room '{room_id}' users"
+                )
+                raise HTTPException(
+                    status_code=404, detail=f"Agent '{agent_id}' not found in room"
+                )
+        except HTTPException:
+            raise
+        except ValueError:
+            logger.warning(
+                f"Agent '{agent_id}' not found in the list, no changes made."
+            )
+        except Exception as e:
+            logger.error(f"An error occurred: {e}")

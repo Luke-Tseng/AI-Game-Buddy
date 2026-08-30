@@ -18,6 +18,7 @@ from app.dependencies import (
 from app.redis_listener import RedisListener
 from app.routers import (
     accounts_router,
+    agent_router,
     chat_router,
     document_router,
     room_router,
@@ -100,6 +101,7 @@ FastAPIInstrumentor.instrument_app(app)
 app.mount("/mcp", mcp_app)
 
 app.include_router(accounts_router.router)
+app.include_router(agent_router.router)
 app.include_router(chat_router.router)
 app.include_router(document_router.router)
 app.include_router(room_router.router)

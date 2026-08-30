@@ -200,3 +200,91 @@ class TestGetRoom:
         # ASSERT: Check that the cache was repopulated.
         mock_redis_service.dict_add.assert_awaited_once()
         mock_redis_service.set_add.assert_awaited_once()
+
+
+## Tests for add_agent & remove_agent
+class TestAddRemoveAgent:
+    TEST_AGENT_ID = "agent-abc"
+
+    @pytest.mark.asyncio
+    async def test_add_agent_success(
+        self, room_service, mock_redis_service, mock_cosmos_service
+    ):
+        # ARRANGE
+        mock_room = MagicMock()
+        mock_room.id = TEST_ROOM_ID
+        room_service.get_room = AsyncMock(return_value=mock_room)
+        room_service.get_room.return_value.model_dump.return_value = {
+            "users": ["user-123"]
+        }
+
+        # ACT
+        result = await room_service.add_agent(TEST_ROOM_ID, self.TEST_AGENT_ID)
+
+        # ASSERT: Redis user set updated
+        mock_redis_service.set_add.assert_awaited_once_with(
+            key=f"room:{TEST_ROOM_ID}:users", values=[self.TEST_AGENT_ID]
+        )
+        mock_redis_service.expire.assert_awaited_once()
+
+        # ASSERT: Cosmos patch adds agent to users
+        mock_cosmos_service.patch_item.assert_awaited_once()
+        _, kwargs = mock_cosmos_service.patch_item.await_args
+        assert kwargs["item_id"] == TEST_ROOM_ID
+        assert kwargs["container_type"] == "rooms"
+
+        # ASSERT: Re-reads room after adding
+        room_service.get_room.assert_awaited()
+        assert result is not None
+
+    @pytest.mark.asyncio
+    async def test_add_agent_room_not_found(self, room_service):
+        # ARRANGE
+        room_service.get_room = AsyncMock(return_value=None)
+
+        # ACT & ASSERT
+        with pytest.raises(ValueError, match="Room not found"):
+            await room_service.add_agent(TEST_ROOM_ID, self.TEST_AGENT_ID)
+
+    @pytest.mark.asyncio
+    async def test_remove_agent_success(
+        self, room_service, mock_redis_service, mock_cosmos_service
+    ):
+        # ARRANGE
+        mock_room = MagicMock()
+        room_service.get_room = AsyncMock(return_value=mock_room)
+        mock_cosmos_service.get_item.return_value = {
+            "id": TEST_ROOM_ID,
+            "users": [TEST_USER_ID, self.TEST_AGENT_ID],
+        }
+
+        # ACT
+        await room_service.remove_agent(TEST_ROOM_ID, self.TEST_AGENT_ID)
+
+        # ASSERT: Redis user set updated
+        mock_redis_service.set_remove.assert_awaited_once_with(
+            key=f"room:{TEST_ROOM_ID}:users", values=[self.TEST_AGENT_ID]
+        )
+
+        # ASSERT: Cosmos patch removes agent from users
+        _, kwargs = mock_cosmos_service.patch_item.await_args
+        assert kwargs["item_id"] == TEST_ROOM_ID
+        assert kwargs["container_type"] == "rooms"
+
+    @pytest.mark.asyncio
+    async def test_remove_agent_not_in_room(
+        self, room_service, mock_redis_service, mock_cosmos_service
+    ):
+        # ARRANGE
+        mock_room = MagicMock()
+        room_service.get_room = AsyncMock(return_value=mock_room)
+        mock_cosmos_service.get_item.return_value = {
+            "id": TEST_ROOM_ID,
+            "users": [TEST_USER_ID],
+        }
+
+        # ACT & ASSERT
+        with pytest.raises(HTTPException) as exc_info:
+            await room_service.remove_agent(TEST_ROOM_ID, self.TEST_AGENT_ID)
+
+        assert exc_info.value.status_code == 404
